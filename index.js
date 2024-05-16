@@ -20,6 +20,7 @@ class Payarc{
             list: this.listCharge.bind(this),
         }
     }
+    
     /**
      * Creates a charge.
      * @param {Object} chargeData - The charge data.
