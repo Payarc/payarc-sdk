@@ -1,7 +1,7 @@
 {
-  "name": "payarc-sdk",
-  "version": "1.0.0",
-  "description": "",
+  "name": "@payarc/payarc-sdk",
+  "version": "0.0.1",
+  "description": "Financial API's SDK",
   "main": "index.js",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/@payarc-sdk"
