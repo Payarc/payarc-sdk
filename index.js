@@ -19,8 +19,10 @@ class Payarc{
             create: this.createCharge.bind(this),
             list: this.listCharge.bind(this),
         }
+        this.customers = {
+            list: this.listCusomer.bind(this),
+        }
     }
-    
     /**
      * Creates a charge.
      * @param {Object} chargeData - The charge data.
@@ -31,7 +33,16 @@ class Payarc{
      */
     async createCharge(chargeData) {
         try {
-            if (/^\d/.test(chargeData.source)) {
+            if (chargeData.source.startsWith('toc_')) {
+                chargeData.token_id = chargeData.source.slice(4);
+                delete chargeData.source;
+            } else if (chargeData.source.startsWith('cus_')) {
+                chargeData.customer_id = chargeData.source.slice(4);
+                delete chargeData.source;
+            } else if (chargeData.source.startsWith('card_')) {
+                chargeData.card_id = chargeData.source.slice(5);
+                delete chargeData.source;
+            } else if (/^\d/.test(chargeData.source)) {
                 chargeData.card_number = chargeData.source;
                 delete chargeData.source;
             }
@@ -40,7 +51,8 @@ class Payarc{
             });
             return this.addObjectId(response.data.data);
         } catch (error) {
-            console.error('Error creating charge:', error);
+            // console.log('Error message:', error.message);
+            return this.manageError({source:'API Create Charge'},error.response || {});
             return null;
         }
     }
@@ -78,13 +90,82 @@ class Payarc{
             return null;
         }
     }
-    addObjectId(object){
-        if(object.id && object.object){
-            if(object.object == 'Charge'){
-                object.object_id = `ch_${object.id}`
+    async listCusomer(searchData= {}){
+        const { limit = 25, page = 1, search = {} } = searchData;
+        try {
+            const response = await axios.get(`${this.baseURL}/v1/customers`, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` },
+                params: {
+                    limit,
+                    page,
+                    ...search
+                }
+            });
+            // Apply the object_id transformation to each customer
+            console.log('response',response)
+            const customers = response.data.data.map(customer => {
+                return this.addObjectId(customer)
+            });
+            const pagination = response.data.meta.pagination || {}
+            delete pagination['links']
+            return {customers,pagination};
+            
+        } catch (error) {
+            // console.log('Error listing customers:', error.response);
+            return this.manageError({source:'API List customers'},error.response || {});
+        }
+    }
+
+    addObjectId(object) {
+        function handleObject(obj) {
+            if (obj.id || obj.customer_id) {
+                if (obj.object === 'Charge') {
+                    obj.object_id = `ch_${obj.id}`;
+                } else if (obj.object === 'customer') {
+                    obj.object_id = `cus_${obj.customer_id}`;
+                } else if (obj.object === 'Token') {
+                    obj.object_id = `tok_${obj.id}`;
+                }
+            }
+            for (const key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    if (typeof obj[key] === 'object' && obj[key] !== null) {
+                        handleObject(obj[key]);  // Recursive call for nested objects
+                    } else if (Array.isArray(obj[key])) {
+                        obj[key].forEach(item => {
+                            if (typeof item === 'object' && item !== null) {
+                                handleObject(item);  // Recursive call for items in arrays
+                            }
+                        });
+                    }
+                }
             }
         }
-        return object
+        handleObject(object);
+        return object;
+    }
+    // addObjectId(object){
+    //     if((object.id || object.customer_id) && object.object){
+    //         if(object.object === 'Charge'){
+    //             object.object_id = `ch_${object.id}`
+    //         }
+    //         if(object.object === 'customer'){
+    //             object.object_id = `cus_${object.customer_id}`
+    //         }
+    //         if(object.object === 'Token'){
+    //             object.object_id = `toc_${object.id}`
+    //         }
+    //     }
+    //     return object
+    //     //TODO dive deep inside of object and in case array? of sub-object chnages as well
+    // }
+    //Function to manage error feedback
+     manageError(seed={}, error){
+        seed.errorMessage = error.statusText || 'unKnown'
+        seed.errorCode = error.status || 'unKnown'
+        seed.errorList = error.data.errors || []
+        seed.errorException = error.data.exception || 'unKnown'
+        return seed
     }
 }
 module.exports = Payarc;

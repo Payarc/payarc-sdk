@@ -49,4 +49,4 @@ then you create instance of the SDK
 ```javascript
 const payarc = new (require('@payarc/payarc-sdk'))(process.env.PAYARC_KEY)
 ```
-if no errors you are goot to go.
+if no errors you are good to go.
