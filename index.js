@@ -17,10 +17,15 @@ class Payarc{
         // Initialize the charges object
         this.charges = {
             create: this.createCharge.bind(this),
+            retrieve: this.getCharge.bind(this),
             list: this.listCharge.bind(this),
+            doRefund: this.refundCharge.bind(this)
         }
         this.customers = {
-            list: this.listCusomer.bind(this),
+            create: this.createCustomer.bind(this),
+            retrieve: this.retreiveCustomer.bind(this),
+            list: this.listCustomer.bind(this),
+            update: this.updateCustomer.bind(this),
         }
     }
     /**
@@ -51,9 +56,24 @@ class Payarc{
             });
             return this.addObjectId(response.data.data);
         } catch (error) {
-            // console.log('Error message:', error.message);
             return this.manageError({source:'API Create Charge'},error.response || {});
             return null;
+        }
+    }
+    async getCharge(chargeId){
+        if (chargeId.startsWith('ch_')) {
+            chargeId = chargeId.slice(3);
+            }
+        try {
+            const response = await axios.get(`${this.baseURL}/v1/charges/${chargeId}`, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` },
+                params: {
+                    include:'transaction_metadata,extra_metadata',
+                }
+            });
+            return this.addObjectId(response.data.data)
+        } catch (error) {
+            return this.manageError({source:'API Retreive Charge Info'},error.response || {}); 
         }
     }
 
@@ -87,22 +107,96 @@ class Payarc{
             
         } catch (error) {
             console.error('Error listing charges:', error);
-            return null;
+            return this.manageError({source:'API List charges'},error.response || {});
         }
     }
-    async listCusomer(searchData= {}){
-        const { limit = 25, page = 1, search = {} } = searchData;
+    async createCustomer(sutomerData = {}){
+        try {
+            const response = await axios.post(`${this.baseURL}/v1/customers`, sutomerData, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` }
+            });
+            const customer = this.addObjectId(response.data.data);
+            if (sutomerData.cards && sutomerData.cards.length > 0) {
+                const cardTokenPromises = sutomerData.cards.map(cardData => {
+                    return this.genTokenForCard(cardData)
+                })
+                const cardTokens = await Promise.all(cardTokenPromises);
+                if(cardTokens && cardTokens.length){
+                    const attachedCardsPromises = cardTokens.map( token =>{
+                        return this.updateCustomer(customer.customer_id, {token_id: token.id})
+                    })
+                    const attachedCards = await Promise.all(attachedCardsPromises)
+                   return this.addObjectId(this.retreiveCustomer(customer.object_id))
+                }
+            }
+        return customer;
+        } catch (error) {
+            return this.manageError({source:'API Create customers'},error.response || {});
+        }
+    }
+    async retreiveCustomer(customerId){
+        if (customerId.startsWith('cus_')) {
+            customerId = customerId.slice(4);
+            }
+            try {
+                const response = await axios.get(`${this.baseURL}/v1/customers/${customerId}`, {
+                    headers: { Authorization: `Bearer ${this.bearerToken}` },
+                    params: {
+                    }
+                });
+                return response.data.data
+            } catch (error) {
+                return this.manageError({source:'API retreive customer info'},error.response || {});
+            }
+    }
+    async genTokenForCard(tokenData = {}){
+        try {
+            const response = await axios.post(`${this.baseURL}/v1/tokens`, tokenData, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` }
+            });
+            return response.data.data
+        } catch (error) {
+            return this.manageError({source:'API for tokens'},error.response || {});
+        }
+    }
+    async addCardToCustomer(customerId, cardData){
+        try {
+            customerId = customerId.object_id?customerId.object_id:customerId
+            if (customerId.startsWith('cus_')) {
+                customerId = customerId.slice(4);
+            }
+            const cardToken =  await this.genTokenForCard(cardData)
+            const attachedCards = await this.updateCustomer(customerId, {token_id: cardToken.id})
+            return this.addObjectId(cardToken.card.data)
+        } catch (error) {
+            return this.manageError({source:'API add card to customer'},error.response || {});
+        }
+    }
+    async updateCustomer(customer, custData){
+        customer = customer.object_id?customer.object_id:customer
+        if(customer.startsWith('cus_')){
+            customer = customer.slice(4)
+        }
+        try {
+            const response = await axios.patch(`${this.baseURL}/v1/customers/${customer}`, custData, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` }
+            });
+            return this.addObjectId(response.data.data)
+        } catch (error) {
+            return this.manageError({source:'API update customer info'},error.response || {});
+        }
+    }
+    async listCustomer(searchData= {}){
+        const { limit = 25, page = 1, constraint = {} } = searchData;
         try {
             const response = await axios.get(`${this.baseURL}/v1/customers`, {
                 headers: { Authorization: `Bearer ${this.bearerToken}` },
                 params: {
                     limit,
                     page,
-                    ...search
+                    ...constraint
                 }
             });
-            // Apply the object_id transformation to each customer
-            console.log('response',response)
             const customers = response.data.data.map(customer => {
                 return this.addObjectId(customer)
             });
@@ -111,22 +205,41 @@ class Payarc{
             return {customers,pagination};
             
         } catch (error) {
-            // console.log('Error listing customers:', error.response);
             return this.manageError({source:'API List customers'},error.response || {});
         }
     }
-
+    async refundCharge(charge, params){
+        let chargeId = charge.object_id?charge.object_id:charge
+        if (chargeId.startsWith('ch_')) {
+            chargeId = chargeId.slice(3);
+            }
+        try{
+                const response = await axios.post(`${this.baseURL}/v1/charges/${chargeId}/refunds`, params, {
+                    headers: { Authorization: `Bearer ${this.bearerToken}` }
+                });
+            return this.addObjectId(response.data.data);
+        } catch (error) {
+            return this.manageError({source:'API Refund a charge'},error.response || {});
+        }
+    }
     addObjectId(object) {
-        function handleObject(obj) {
+        const handleObject =(obj) => {
             if (obj.id || obj.customer_id) {
                 if (obj.object === 'Charge') {
-                    obj.object_id = `ch_${obj.id}`;
+                    obj.object_id = `ch_${obj.id}`
+                    obj.doRefund = this.refundCharge.bind(this,obj)
                 } else if (obj.object === 'customer') {
-                    obj.object_id = `cus_${obj.customer_id}`;
+                    obj.object_id = `cus_${obj.customer_id}`
+                    obj.update = this.updateCustomer.bind(this,obj)
+                    obj.cards = {}
+                    obj.cards.create = this.addCardToCustomer.bind(this, obj)
                 } else if (obj.object === 'Token') {
-                    obj.object_id = `tok_${obj.id}`;
+                    obj.object_id = `tok_${obj.id}`
+                } else if (obj.object === 'Card') {
+                    obj.object_id = `card_${obj.id}`
                 }
             }
+
             for (const key in obj) {
                 if (obj.hasOwnProperty(key)) {
                     if (typeof obj[key] === 'object' && obj[key] !== null) {
@@ -144,27 +257,15 @@ class Payarc{
         handleObject(object);
         return object;
     }
-    // addObjectId(object){
-    //     if((object.id || object.customer_id) && object.object){
-    //         if(object.object === 'Charge'){
-    //             object.object_id = `ch_${object.id}`
-    //         }
-    //         if(object.object === 'customer'){
-    //             object.object_id = `cus_${object.customer_id}`
-    //         }
-    //         if(object.object === 'Token'){
-    //             object.object_id = `toc_${object.id}`
-    //         }
-    //     }
-    //     return object
-    //     //TODO dive deep inside of object and in case array? of sub-object chnages as well
-    // }
+
     //Function to manage error feedback
      manageError(seed={}, error){
+        seed.object = `Error ${this.version}`
         seed.errorMessage = error.statusText || 'unKnown'
         seed.errorCode = error.status || 'unKnown'
-        seed.errorList = error.data.errors || []
-        seed.errorException = error.data.exception || 'unKnown'
+        seed.errorList = error.data && error.data.errors ? error.data.errors : [];
+        seed.errorException = error.data && error.data.exception ? error.data.exception : 'unKnown'
+        seed.errorDataMessage = (error.data && error.data.message) || 'unKnown'
         return seed
     }
 }
