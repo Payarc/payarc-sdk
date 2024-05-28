@@ -55,7 +55,12 @@ if no errors you are good to go.
 Documentation for existing API provided by Payarc can be found on https://docs.payarc.net/
 
 ## Examples
-SDK is build around object payarc. 
+SDK is build around object payarc. From this object you can access properties and function that will support your operations.
+Object payarc.charges is used to manipulate payments in the system. This object has following functions: 
+    create - this function will create a payment intent or charge accepting various configurations and parameters. See examples for some usecase. 
+    retrieve - this function returns json object 'Charge' with details
+    list - returns an object with attribute 'charges' a list of json object holding information for charges and object in attribute 'pagination'
+    doRefund - function to perform a refund over existing charge
 
 First, initialize the Payarc SDK with your API key:
 
