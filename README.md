@@ -1,6 +1,6 @@
 # Payarc SDK
 
-The Payarc SDK allows developers to integrate Payarc's payment processing capabilities into their applications with ease. This SDK provides a comprehensive set of APIs to handle transactions, customer management, and more.
+The Payarc SDK allows developers to integrate Payarc's payment processing capabilities into their applications with ease. This SDK provides a comprehensive set of APIs to handle transactions, customer management, and candidate merchant management.
 
 ## Table of Contents
 
@@ -31,6 +31,7 @@ npm install @payarc/payarc-sdk
 ## Usage
 
 Before you can use the Payarc SDK, you need to initialize it with your API key and the URL base point. This is required for authenticating your requests and specifying the endpoint for the APIs. For each environment (prod, sandbox) both parameters have different values. This information should stay on your server and security measures must be taken not to share it with your customers. Provided examples use package `dotenv` to store this information and provide it on the constructor. It is not mandatory to use this approach as your setup could be different.
+In case you want to take benefits of candidate merchant functionality you need so called Agent identification token. This token could be obtained from the portal.
 
 ```bash
 npm install dotenv
@@ -40,6 +41,7 @@ You have to create `.env` file in root of your project and update the following 
 ```ini
 PAYARC_ENV=''
 PAYARC_KEY=''
+AGENT_KEY=''
 ```
 You have to create object from SDK to call different methods depends on business needs. Optional you can load `.env` file into configuration by adding
 ```javascript
@@ -53,6 +55,8 @@ then you create instance of the SDK
  * @param {string} [baseUrl=sandbox] - The url of access points possible values prod or sandbox, as sandbox is the default one. Vary for testing playground and production. can be set in environment file too.
  * @param {string} [apiVersion=1] - The version of access points for now 1(it has default value thus could be omitted).
  * @param {string} [version='1.0'] - API version.
+ * @param {string} bearerTokenAgent - The bearer token for agent authentication. Only required if you need functionality around candidate merchant
+ * 
  */
 const payarc = new (require('@payarc/payarc-sdk'))(process.env.PAYARC_KEY)
 
@@ -60,15 +64,36 @@ const payarc = new (require('@payarc/payarc-sdk'))(process.env.PAYARC_KEY)
 if no errors you are good to go.
 
 ## API Reference
-Documentation for existing API provided by Payarc can be found on https://docs.payarc.net/
+Documentation for existing payment API provided by Payarc can be found on https://docs.payarc.net/
+Documentation for existing candidate merchant management API can be found on https://docs.apply.payarc.net/
 
 ## Examples
 SDK is build around object payarc. From this object you can access properties and function that will support your operations.
+
+### Object payarc.charges
 Object payarc.charges is used to manipulate payments in the system. This object has following functions: 
-    create - this function will create a payment intent or charge accepting various configurations and parameters. See examples for some usecase. 
+    create - this function will create a payment intent or charge accepting various configurations and parameters. See examples for some use cases. 
     retrieve - this function returns json object 'Charge' with details
     list - returns an object with attribute 'charges' a list of json object holding information for charges and object in attribute 'pagination'
     createRefund - function to perform a refund over existing charge
+
+### Object payarc.customer
+Object payarc.customer is representing your customers with personal details, addresses and credit cards and/or bank accounts. Saved for future needs
+    create - this function will create object stored in the database for a customer. it will provide identifier unique for each in order to identify and inquiry details. See examples and docs for more information
+    retrieve - this function extract details for specific customer from database
+    list - this function allows you to search amongst customers you had created. It is possible to search based on some criteria. See examples and documentation for more details  
+    update - this function allows you to modify attributes of customer object.
+
+### Object payarc.applications
+Object payarc.applications is used by Agents and ISVs to manage candidate merchant when acquiring new customer. As such you can create, list, get details, and manage documents required in boarding process.  
+            create - this function add new candidate into database. See documentation for available attributes, possible values for some of them and which are mandatory. 
+            list - returns a list of application object representing future merchants. Use this function to find the interested identifier. 
+            retrieve - based on identifier or an object returned from list function, this function will return details 
+            delete - in case candidate merchant is no longer needed it will remove information for it.
+            addDocument - this function is adding base64 encoded document to existing candidate merchant. For different types of document required in the process contact Payarc. See examples how the function could be invoked
+            deleteDocument - this function removes document, when document is no longer valid.
+            submit - this function initialize the process of sing off contract between Payarc and your client
+            
 
 First, initialize the Payarc SDK with your API key:
 
@@ -154,7 +179,7 @@ payarc.charges.create({
 
 ### Example: Create a Charge by Bank account ID
 
-This example shows how to create an ACH charge when you know the bank account o
+This example shows how to create an ACH charge when you know the bank account 
 ```javascript
 payarc.customers.retrieve('cus_AnonymizedCustomerID')
     .then((customer) => {
@@ -169,24 +194,25 @@ payarc.customers.retrieve('cus_AnonymizedCustomerID')
        ).then((ex)=>{console.log('Error detected:', ex)})
     })
 ```
-// Example make ACH charge with new bank account
-// payarc.customers.retrieve('cus_xMADVnA4jjNpV4nN')
-// .then((customer) => {
-//     customer.charges.create(
-//     {
-//         amount:7788,
-//         sec_code: 'WEB',
-//         source: {
-//             account_number:'123432575352',
-//             routing_number:'123345349',
-//             first_name: 'FirstName III',
-//             last_name:'LastName III',
-//             account_type: 'Personal Savings',
-//         }
-//     }
-//    ).then((ex)=>{console.log('Exxxx', ex)})
-// })
-
+Example make ACH charge with new bank account. Details for bank account are send in attribute source
+```javascript
+payarc.customers.retrieve('cus_xMADVnA4jjNpV4nN')
+.then((customer) => {
+    customer.charges.create(
+    {
+        amount:7788,
+        sec_code: 'WEB',
+        source: {
+            account_number:'123432575352',
+            routing_number:'123345349',
+            first_name: 'FirstName III',
+            last_name:'LastName III',
+            account_type: 'Personal Savings',
+        }
+    }
+   ).then((ex)=>{console.log('Error detected:', ex)})
+})
+```
 
 ## Listing Charges
 
@@ -397,6 +423,111 @@ payarc.customers.retrieve('cus_AnonymizedCustomerID')
     })
     .catch(error => console.error(error));
 ```
+## Manage Candidate Merchants
+### Create new Candidate Merchant
+In the process of connecting your clients with Payarc a selection is made based on Payarc's criteria. Process begins with filling information for the merchant and creating an entry in the database. Here is an example how this process could start
+```javascript
+payarc.applications.create(
+    {
+        "Lead": 
+        {
+            "Industry": "cbd",
+            "MerchantName": "My applications company",
+            "LegalName": "Best Co in w",
+            "ContactFirstName": "Joan",
+            "ContactLastName": "Dhow",
+            "ContactEmail":"contact@mail.com",
+            "DiscountRateProgram": "interchange"
+        },
+        "Owners": [
+            {
+                "FirstName": "First",
+                "LastName": "Last",
+                "Title": "President",
+                "OwnershipPct": 100,
+                "Address":"Somewhere",
+                "City": "City Of Test",
+                "SSN": "4546-0034",
+                "State": "WY",
+                "ZipCode":"10102",
+                "BirthDate": "1993-06-24",
+                "Email": "nikoj@negointeresuva.com",
+                "PhoneNo": "2346456784"
+            }
+        ]
+    }
+).then((result)=>{console.log('the result is ', result)})
+.catch((exep)=>{console.log('We encountered an issue ',exep);})
+```
+In this example attribute `Lead` is an object representing the business as the attribute `Owners` is and array of objects representing the owners of this business. Note this is the minimum information required. For successful boarding you should provide as much information as you can, for reference see documentation.
 
+### Retrieve Information for Candidate Merchant
+To continue with onboarding process you might need to provide additional information or to inquiry existing leads. In SDK existis following functions `list` and `retrieve`. 
 
-This documentation should help you understand how to use the Payarc SDK to manage charges and customers. If you have any questions, please refer to the Payarc SDK documentation or contact support.
+List all candidate merchant for current agent
+```javascript
+payarc.applications.list()
+.then((res)=>{console.log('List of applications', res);})
+.catch((error)=>{console.log('There is a problem somewhere ', error);})
+```
+Retrieve data for current candidate merchant
+```javascript
+payarc.applications.retrieve('appl_vajm67vv9m7bxrlk')
+.then((res)=>{console.log('Details for applicant', res)})
+.catch((erro)=>{console.log('We have a problem ', erro);})
+```
+Retrieve data for candidate merchant from a list inc documents
+```javascript
+payarc.applications.list()
+.then((res)=>{
+    const applicant = res.slice(-1)[0]
+    applicant.retrieve().then((details)=>{console.log('Documents for applicant are', details.Documents)})
+})
+.catch((error)=>{console.log('There is a problem somewhere ', error);})
+```
+
+### Documents management
+SDK is providing possibility of adding or removing documents with `addDocument` and `deleteDocument` respectively. Example for adding supportive documents to candidate merchant
+```javascript
+payarc.applications.list()
+    .then((res) => {
+        const applicant = res[0]
+        applicant.addDocument(
+            {
+                "DocumentType": "Bank Statement",
+                "DocumentName": "sample document 1",
+                "DocumentIndex": 12243,
+                "DocumentDataBase64": "data:image/jpeg;base64,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"
+            }
+        ).then((res) => { console.log('Documents added are', res) })
+    })
+    .catch((error) => { console.log('There is a problem somewhere ', error); })
+```
+In this example we search for all candidate merchants and on the last added in the system we attach a document (Payarc logo) that will be used in on boarding process. See documentation for document attributes.
+In case document is no longer needed you can see those examples
+```javascript
+payarc.applications.list()
+    .then((res) => {
+        const applicant = res[0]
+        applicant.retrieve().then((details) => {
+            const document = (details.Documents && details.Documents.data && details.Documents.data.length) ? details.Documents.data[0] : null
+            if (document) {
+                document.delete().then((res) => { console.log('Doc deleted with response', res); })
+            }
+        })
+    })
+    .catch((error) => { console.log('There is a problem somewhere ', error); })
+```
+Again we search for the last candidate and remove first found (if exists) document. In case we already know the document ID, for example if we retrieve information for candidate you can use  
+```javascript
+payarc.applications.deleteDocument('doc_z53dmgo0b6g6wral').then((res)=>{console.log('Document is removed ', res)})
+```
+### Signature
+As agent or ISV the process is completed once the contract between Payarc and your client is sent to this client for signature. Once all documents and data is collected method `submit` of the candidate merchant must be invoked, here is an example 
+```javascript
+payarc.applications.submit('appl_vajm67vv9m7bxrlk')
+.then((res)=>{console.log('Submitted with ', res)})
+.catch((erro)=>{console.log('We have a problem ', erro);})
+```
+
+This documentation should help you understand how to use the Payarc SDK to manage charges and customers. If you have any questions, please refer to the Payarc API documentation or contact support.
