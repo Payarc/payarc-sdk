@@ -7,7 +7,7 @@
     "registry": "https://npm.pkg.github.com/@payarc"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"No test specified\" "
   },
   "keywords": ["payarc","SDK","payment gateway"],
   "author": "",
