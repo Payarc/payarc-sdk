@@ -3,9 +3,6 @@
   "version": "0.0.5",
   "description": "Financial API's SDK",
   "main": "index.js",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/@payarc"
-  },
   "scripts": {
     "test": "echo \"No test specified for now\" "
   },
