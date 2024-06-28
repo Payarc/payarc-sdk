@@ -1,5 +1,5 @@
 {
-  "name": "payarc-sdk",
+  "name": "@payarcdev/payarc-sdk",
   "version": "0.0.5",
   "description": "Financial API's SDK",
   "main": "index.js",
