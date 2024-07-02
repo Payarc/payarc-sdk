@@ -40,6 +40,13 @@ class Payarc {
             submit: this.submitApplicantForSignature.bind(this),
             deleteDocument: this.deleteApplicantDocument.bind(this)
         }
+        this.splitCampaigns = {
+            create: this.createCampaign.bind(this),
+            list: this.getAllCampaigns.bind(this),
+            retrieve: this.getDtlCampaign.bind(this),
+            update: this.updateCampaign.bind(this),
+            listAccounts: this.getAllAccounts.bind(this)
+        }
 
     }
     /**
@@ -404,7 +411,7 @@ class Payarc {
                 });
             return this.addObjectId(response.data)
         } catch (error) {
-
+            
             return this.manageError({ source: 'API Apply documents add' }, error.response || {});
         }
     }
@@ -427,7 +434,7 @@ class Payarc {
             return this.manageError({ source: 'API Apply document delete' }, error.response || {});
         }
     }
-    async submitApplicantForSignature(applicant) {
+    async submitApplicantForSignature(applicant){
         try {
             let applicantId = applicant.object_id ? applicant.object_id : applicant
             if (applicantId.startsWith('appl_')) {
@@ -445,6 +452,80 @@ class Payarc {
             return this.manageError({ source: 'API Submit for signature' }, error.response || {});
         }
     }
+
+    // Split Campaigns
+    async createCampaign(data){
+        try {
+            const response = await axios.post(`${this.baseURL}agent-hub/campaigns`,
+                data,
+                {
+                    headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+                });
+            return this.addObjectId(response.data.data)
+        } catch (error) {
+            return this.manageError({ source: 'API Create campaign ...' }, error.response || {});
+        }
+
+    }
+    async getAllCampaigns(){
+        try {
+            const response = await axios.get(`${this.baseURL}agent-hub/campaigns`, {
+                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` },
+                params: {
+                    limit: 0
+                }
+            });
+            return this.addObjectId(response.data.data)
+
+        } catch (error) {
+            return this.manageError({ source: 'API get campaigns status' }, error.response || {});
+        }
+    }
+    async getDtlCampaign(key){
+        try {
+            let keyId = key.object_id ? key.object_id : key
+            if (keyId.startsWith('cmp_')) {
+                keyId = keyId.slice(4)
+            }
+            const response = await axios.get(`${this.baseURL}agent-hub/campaigns/${keyId}`, {
+                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` },
+                params: {
+                    limit: 0
+                }
+            });
+            return this.addObjectId(response.data.data)
+
+        } catch (error) {
+            console.log('Ave from camp', error);
+            return this.manageError({ source: 'API get campaigns status' }, error.response || {});
+        }
+    }
+    async updateCampaign(data, newData){
+        let dataId = data.object_id ? data.object_id : data
+        if (dataId.startsWith('cmp_')) {
+            dataId = dataId.slice(4)
+        }
+        try {
+            const response = await axios.patch(`${this.baseURL}agent-hub/campaigns/${dataId}`, newData, {
+                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+            });
+            return this.addObjectId(response.data.data)
+        } catch (error) {
+            return this.manageError({ source: 'API update customer info' }, error.response || {});
+        }
+    }
+    async getAllAccounts(){
+        try {
+            const response = await axios.get(`${this.baseURL}account/my-accounts`, {
+                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+            });
+            return this.addObjectId(response.data || {})
+
+        } catch (error) {
+            return this.manageError({ source: 'API get all merchants' }, error.response || {});
+        }
+    }
+
     addObjectId(object) {
         const handleObject = (obj) => {
             if (obj.id || obj.customer_id) {
@@ -478,10 +559,14 @@ class Payarc {
                     obj.retrieve = this.retrieveApplicant.bind(this, obj)
                     obj.delete = this.deleteApplicant.bind(this, obj)
                     obj.addDocument = this.addApplicantDocument.bind(this, obj)
-                    obj.submit = this.submitApplicantForSignature.bind(this, obj)
+                    obj.submit = this.submitApplicantForSignature.bind(this,obj)
                 } else if (obj.object === 'ApplyDocuments') {
                     obj.object_id = `doc_${obj.id}`
                     obj.delete = this.deleteApplicantDocument.bind(this, obj)
+                } else if(obj.object === 'Campaign'){
+                    obj.object_id = `cmp_${obj.id}`
+                    obj.update = this.updateCampaign.bind(this, obj)
+                    obj.retrieve = this.getDtlCampaign.bind(this, obj)
                 }
             } else if (obj.MerchantCode) {
                 obj.object_id = `appl_${obj.MerchantCode}`
@@ -489,7 +574,7 @@ class Payarc {
                 obj.retrieve = this.retrieveApplicant.bind(this, obj)
                 obj.delete = this.deleteApplicant.bind(this, obj)
                 obj.addDocument = this.addApplicantDocument.bind(this, obj)
-                obj.submit = this.submitApplicantForSignature.bind(this, obj)
+                obj.submit = this.submitApplicantForSignature.bind(this,obj)
             }
 
             for (const key in obj) {

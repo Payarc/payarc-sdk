@@ -530,4 +530,79 @@ payarc.applications.submit('appl_vajm67vv9m7bxrlk')
 .catch((erro)=>{console.log('We have a problem ', erro);})
 ```
 
+## ISV Campaigns
+
+As ISV you can create campaigns to manage financial details around your processing merchants. In the SDK the object representing this functionality is `splitCampaigns` this object has functions to create. list, update campaigns. Here below are examples related to manipulation of campaign.
+
+### List all campaigns
+
+To inquiry all campaigns available for your agent
+
+```javascript
+//List all campaign for the agent
+payarc.splitCampaigns.list()
+.then((res)=>{console.log('Campaigns we found',res);})
+.catch((erro)=>{console.log('We have a problem ', erro);})
+```
+as result a list of campaigns is returned. based on this list you can update details
+
+### List all processing merchants
+
+Use this function to get collection of processing merchants. Later on you can assign campaigns to them
+
+```javascript
+//List all processing merchants for the agent
+payarc.splitCampaigns.listAccounts()
+.then((res)=>{console.log('Merchants we found',res);})
+.catch((erro)=>{console.log('We have a problem ', erro);})
+```
+
+### Create and retrieve details for campaign
+
+Use this function to create new campaign
+```javascript
+//Create campaign with minimum information
+payarc.splitCampaigns.create({
+    name: 'Mega bonus',
+    description: "Compliment for my favorite customers",
+    note: "Only for VIPs",
+    base_charge: 33.33,
+    perc_charge: 7.77,
+    is_default: '0',
+    accounts:[]
+})
+.then((res)=>{console.log('Campaigns created',res);})
+.catch((erro)=>{console.log('We have a problem ', erro);})
+```
+as result the new campaign is returned use it as an object of reference to `object_id`. IF you need to query details about the campaign see the example below.
+
+```javascript
+//Retrieve details for a campaign 
+payarc.splitCampaigns.retrieve('cmp_9y86xdrpq07bn0qw')
+.then((res)=>{console.log('Campaigns details:',res);})
+.catch((erro)=>{console.log('We have a problem ', erro);})
+
+```
+
+### Update campaign details
+
+in case you need to update details of the campaign use `update` function. in the examples below you can reference campaign by id or as an object
+```javascript
+//Update specific data with id of the campaign note
+payarc.splitCampaigns.update('cmp_9y86gddgpq07bn0qw',{notes:'New version of notes'})
+.then((res)=>{console.log('Updated campaign details:',res);})
+.catch((erro)=>{console.log('We have a problem ', erro);})
+```
+
+```javascript
+//Update specific data of the campaign note
+payarc.splitCampaigns.retrieve('cmp_9y86zmgpq07bn0qw')
+.then((campaign)=>{
+    campaign.update({notes:'Internal modifications'}).then((res)=>{console.log('I am updated note', res);})
+})
+.catch((erro)=>{console.log('We have a problem ', erro);})
+```
+
+
+
 This documentation should help you understand how to use the Payarc SDK to manage charges and customers. If you have any questions, please refer to the Payarc API documentation or contact support.
