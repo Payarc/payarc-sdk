@@ -35,6 +35,7 @@ class Payarc {
             create: this.addLead.bind(this),
             list: this.applyApps.bind(this),
             retrieve: this.retrieveApplicant.bind(this),
+            update: this.updateApplicant.bind(this),
             delete: this.deleteApplicant.bind(this),
             addDocument: this.addApplicantDocument.bind(this),
             submit: this.submitApplicantForSignature.bind(this),
@@ -381,6 +382,28 @@ class Payarc {
             return this.manageError({ source: 'API Apply apps status' }, error.response || {});
         }
     }
+    async updateApplicant(object, newData){
+        let dataId = object.object_id ? object.object_id : object
+        if (dataId.startsWith('appl_')) {
+            dataId = dataId.slice(5)
+        }
+        try {
+            newData = Object.assign({    
+                "bank_account_type":"01",
+                "slugId":"financial_information",
+                "skipGIACT": true}, 
+                newData) //Add required properties to update the bank
+            const response = await axios.patch(`${this.baseURL}agent-hub/apply-apps/${dataId}`, newData, {
+                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+            });
+            if(response.status === 200){
+                return this.retrieveApplicant(dataId)
+            }
+            return this.addObjectId(response.data)
+        } catch (error) {
+            return this.manageError({ source: 'API update Application info' }, error.response || {});
+        }
+    }
     async deleteApplicant(applicant) {
         try {
             let applicantId = applicant.object_id ? applicant.object_id : applicant
@@ -390,7 +413,7 @@ class Payarc {
             const resp = await axios.delete(`${this.baseURL}agent-hub/apply/delete-lead`, { 'MerchantCode': applicantId }, {
                 headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
             });
-            return this.addObjectId(resp.data);
+            return this.addObjectId(resp.data.data);
         } catch (error) {
             return this.manageError({ source: 'API Apply apps delete' }, error.response || {});
         }
@@ -560,6 +583,7 @@ class Payarc {
                     obj.delete = this.deleteApplicant.bind(this, obj)
                     obj.addDocument = this.addApplicantDocument.bind(this, obj)
                     obj.submit = this.submitApplicantForSignature.bind(this,obj)
+                    obj.update = this.updateApplicant.bind(this, obj)
                 } else if (obj.object === 'ApplyDocuments') {
                     obj.object_id = `doc_${obj.id}`
                     obj.delete = this.deleteApplicantDocument.bind(this, obj)
@@ -570,11 +594,13 @@ class Payarc {
                 }
             } else if (obj.MerchantCode) {
                 obj.object_id = `appl_${obj.MerchantCode}`
+                obj.object = 'ApplyApp'
                 delete obj.MerchantCode
                 obj.retrieve = this.retrieveApplicant.bind(this, obj)
                 obj.delete = this.deleteApplicant.bind(this, obj)
                 obj.addDocument = this.addApplicantDocument.bind(this, obj)
                 obj.submit = this.submitApplicantForSignature.bind(this,obj)
+                obj.update = this.updateApplicant.bind(this, obj)
             }
 
             for (const key in obj) {

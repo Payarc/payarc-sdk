@@ -13,15 +13,7 @@ The Payarc SDK allows developers to integrate Payarc's payment processing capabi
 
 ## Installation
 
-To install the Payarc SDK, you need to configure your npm to use the Payarc registry. Create a `.npmrc` file in your project root and add the following directives:
-
-```text
-@payarc:registry=https://npm.pkg.github.com/
-//npm.pkg.github.com/:_authToken=TOKEN_PROVIDED_BY_PAYARC
-``` 
-Replace TOKEN_PROVIDED_BY_PAYARC with the actual token provided by Payarc.
-
-Then you can install the Payarc SDK using npm (for Node.js projects).
+You can install the Payarc SDK using npm (for Node.js projects).
 
 ```bash
 npm install @payarc/payarc-sdk
@@ -58,7 +50,13 @@ then you create instance of the SDK
  * @param {string} bearerTokenAgent - The bearer token for agent authentication. Only required if you need functionality around candidate merchant
  * 
  */
-const payarc = new (require('@payarc/payarc-sdk'))(process.env.PAYARC_KEY)
+const payarc = new (require('@payarc/payarc-sdk'))(
+    process.env.PAYARC_KEY,
+    process.env.PAYARC_ENV,
+    undefined,
+    undefined,
+    process.env.AGENT_KEY
+)
 
 ```
 if no errors you are good to go.
@@ -486,6 +484,18 @@ payarc.applications.list()
 .catch((error)=>{console.log('There is a problem somewhere ', error);})
 ```
 
+Update properties of candidate merchant
+```javascript
+payarc.applications.update('appl_vajm67vv9m7bxrlk',
+    {
+    "MerchantBankAccountNo":"987396827",
+    "MerchantBankRoutingNo":"1848505",
+    "BankInstitutionName":"Bank of something"
+    })
+.then((res)=>{console.log('Update for applicant', res)})
+.catch((erro)=>{console.log('We have a problem ', erro);})
+```
+
 ### Documents management
 SDK is providing possibility of adding or removing documents with `addDocument` and `deleteDocument` respectively. Example for adding supportive documents to candidate merchant
 ```javascript
@@ -530,7 +540,7 @@ payarc.applications.submit('appl_vajm67vv9m7bxrlk')
 .catch((erro)=>{console.log('We have a problem ', erro);})
 ```
 
-## ISV Campaigns
+## Split Payment
 
 As ISV you can create campaigns to manage financial details around your processing merchants. In the SDK the object representing this functionality is `splitCampaigns` this object has functions to create. list, update campaigns. Here below are examples related to manipulation of campaign.
 
