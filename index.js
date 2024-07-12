@@ -233,6 +233,7 @@ class Payarc {
             }
             const cardToken = await this.genTokenForCard(cardData)
             const attachedCards = await this.updateCustomer(customerId, { token_id: cardToken.id })
+            console.log('addCardTotCustomer attachedCards', attachedCards);
             return this.addObjectId(cardToken.card.data)
         } catch (error) {
             return this.manageError({ source: 'API add card to customer' }, error.response || {});
