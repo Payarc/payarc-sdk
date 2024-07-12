@@ -10,10 +10,10 @@ class Payarc {
     constructor(bearerToken = null, baseUrl = 'sandbox', apiVersion = '/v1/', version = '1.0', bearerTokenAgent = null) {
         // if (!bearerToken) {
         //     throw new Error('Bearer token is required');
-        // }
+        // }        this.bearerToken = bearerToken;
         this.bearerToken = bearerToken;
         this.version = version;
-        this.baseURL = (baseUrl === 'prod') ? 'https://api.payarc.net' : (baseUrl === 'sandbox' ? 'https://test.payarc.net' : baseUrl) // if prod then prod if sandbox then test else what u send
+        this.baseURL = (baseUrl === 'prod') ? 'https://api.payarc.net' : (baseUrl === 'sandbox' ? 'https://testapi.payarc.net' : baseUrl) // if prod then prod if sandbox then test else what u send
         this.baseURL = (apiVersion === '/v1/') ? `${this.baseURL}${apiVersion}` : `${this.baseURL}/v${apiVersion}/`
         this.bearerTokenAgent = bearerTokenAgent
 
@@ -39,7 +39,8 @@ class Payarc {
             delete: this.deleteApplicant.bind(this),
             addDocument: this.addApplicantDocument.bind(this),
             submit: this.submitApplicantForSignature.bind(this),
-            deleteDocument: this.deleteApplicantDocument.bind(this)
+            deleteDocument: this.deleteApplicantDocument.bind(this),
+            listSubAgents: this.SubAgents.bind(this)
         }
         this.splitCampaigns = {
             create: this.createCampaign.bind(this),
@@ -233,7 +234,6 @@ class Payarc {
             }
             const cardToken = await this.genTokenForCard(cardData)
             const attachedCards = await this.updateCustomer(customerId, { token_id: cardToken.id })
-            console.log('addCardTotCustomer attachedCards', attachedCards);
             return this.addObjectId(cardToken.card.data)
         } catch (error) {
             return this.manageError({ source: 'API add card to customer' }, error.response || {});
@@ -333,6 +333,9 @@ class Payarc {
     // this method is a wrapper of API add-lead
     async addLead(applicant) {
         try {
+            if(applicant.agentId && applicant.agentId.startsWith('usr_')){
+                applicant.agentId = applicant.agentId.slice(4)
+            }
             const resp = await axios.post(`${this.baseURL}agent-hub/apply/add-lead`, applicant, {
                 headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
             });
@@ -439,6 +442,17 @@ class Payarc {
             return this.manageError({ source: 'API Apply documents add' }, error.response || {});
         }
     }
+    async SubAgents() {
+        try {
+            const response = await axios.get(`${this.baseURL}agent-hub/sub-agents`,
+                {
+                    headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+                });
+            return this.addObjectId(response.data && response.data.data || [])
+        } catch (error) {
+            return this.manageError({ source: 'API List sub agents' }, error.response || {});
+        }
+    }
     async deleteApplicantDocument(document) {
 
         try {
@@ -520,7 +534,6 @@ class Payarc {
             return this.addObjectId(response.data.data)
 
         } catch (error) {
-            console.log('Ave from camp', error);
             return this.manageError({ source: 'API get campaigns status' }, error.response || {});
         }
     }
@@ -585,6 +598,7 @@ class Payarc {
                     obj.addDocument = this.addApplicantDocument.bind(this, obj)
                     obj.submit = this.submitApplicantForSignature.bind(this,obj)
                     obj.update = this.updateApplicant.bind(this, obj)
+                    obj.listSubAgents = this.SubAgents.bind(this, obj)
                 } else if (obj.object === 'ApplyDocuments') {
                     obj.object_id = `doc_${obj.id}`
                     obj.delete = this.deleteApplicantDocument.bind(this, obj)
@@ -592,6 +606,8 @@ class Payarc {
                     obj.object_id = `cmp_${obj.id}`
                     obj.update = this.updateCampaign.bind(this, obj)
                     obj.retrieve = this.getDtlCampaign.bind(this, obj)
+                } else if(obj.object === 'User'){
+                    obj.object_id = `usr_${obj.id}`
                 }
             } else if (obj.MerchantCode) {
                 obj.object_id = `appl_${obj.MerchantCode}`
@@ -602,6 +618,7 @@ class Payarc {
                 obj.addDocument = this.addApplicantDocument.bind(this, obj)
                 obj.submit = this.submitApplicantForSignature.bind(this,obj)
                 obj.update = this.updateApplicant.bind(this, obj)
+                obj.listSubAgents= this.SubAgents.bind(this,obj)
             }
 
             for (const key in obj) {

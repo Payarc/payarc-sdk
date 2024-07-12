@@ -457,7 +457,52 @@ payarc.applications.create(
 ).then((result)=>{console.log('the result is ', result)})
 .catch((exep)=>{console.log('We encountered an issue ',exep);})
 ```
-In this example attribute `Lead` is an object representing the business as the attribute `Owners` is and array of objects representing the owners of this business. Note this is the minimum information required. For successful boarding you should provide as much information as you can, for reference see documentation.
+In this example attribute `Lead` is an object representing the business as the attribute `Owners` is and array of objects representing the owners of this business. Note this is the minimum information required. For successful boarding you should provide as much information as you can, for reference see documentation. In some case the logged user has to create application in behalf of some other agent. in this case the `object_id` of this agent must be sent in the object sent to function `payarc.applications.create`.To obtain the list of agent you can use function `listSubAgents` as it is shown on examples:
+
+```javascript
+const applicant =
+{
+    "Lead":
+    {
+        "Industry": "cbd",
+        "MerchantName": "My applications company",
+        "LegalName": "Best Co in w",
+        "ContactFirstName": "Joan",
+        "ContactLastName": "Dhow",
+        "ContactTitle": 'sir',
+        "ContactEmail": "contact@mail.com",
+        "DiscountRateProgram": "interchange",
+        "ACHTransactions":false
+    },
+    "Owners": [
+        {
+            "FirstName": "First",
+            "LastName": "Last",
+            "Title": "President",
+            "OwnershipPct": 100,
+            "Address": "Somewhere",
+            "City": "City Of Test",
+            "SSN": "4546-0034",
+            "State": "WY",
+            "ZipCode": "10102",
+            "BirthDate": "1993-06-24",
+            "Email": "nikoj@negointeresuva.com",
+            "PhoneNo": "2346456784"
+        }
+    ]
+}
+payarc.applications.listSubAgents()
+    .then((result) => {
+        if (result.length) {
+            applicant.agentId = result[0].object_id //Add agent Id in behalf of which appicon is logged
+            payarc.applications.create(
+                applicant
+            ).then((result) => { console.log('the result is ', result) })
+                .catch((exep) => { console.log('We encountered an issue during creation ', exep); })
+        }
+    })
+    .catch((error) => { console.log('We encountered an issue ', error); })
+```
 
 ### Retrieve Information for Candidate Merchant
 To continue with onboarding process you might need to provide additional information or to inquiry existing leads. In SDK existis following functions `list` and `retrieve`. 
