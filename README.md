@@ -660,4 +660,115 @@ payarc.splitCampaigns.retrieve('cmp_9y86zmgpq07bn0qw')
 
 
 
+## Recurrent Payments Setup
+Recurrent payments, also known as subscription billing, are essential for any service-based business that requires regular, automated billing of customers. By setting up recurrent payments through our SDK, you can offer your customers the ability to easily manage subscription plans, ensuring timely and consistent revenue streams. This setup involves creating subscription plans, managing customer subscriptions, and handling automated billing cycles. Below, we outline the steps necessary to integrate recurrent payments into your application using our SDK.
+
+### Creating Subscription Plans
+The first step in setting up recurrent payments is to create subscription plans. These plans define the billing frequency, pricing, and any trial periods or discounts. Using our SDK, you can create multiple subscription plans to cater to different customer needs. Here is an example of how to create a plan:
+```javascript
+const Plan = {
+    name: 'Monthly billing regular',
+    amount: 999,
+    interval: 'month',
+    statement_descriptor: '2024 MerchantT. Rglr srvc'
+}
+payarc.billing.plan.create(Plan)
+.then((result)=>{console.log('Created plan is:', result);})
+.catch((erro)=>{console.log('We have a problem ', erro);})
+```
+in this example a new plan is created in attribute `name` client friendly name of the plan must be provided. Attribute `amount` is number in cents. in `interval` you specify how often the request for charge will occurs. Information in `statement_descriptor` will be present in the reason for payment request. For more attributes and details check API documentation.
+
+
+### Updating Subscription Plan
+Once plan is created sometimes it is required details form it to be changed. The SDK allow you to manipulate object `plan` or to refer to the object by ID. here are examples how to change details of a plan"
+
+```javascript
+// Update plan when know the object
+payarc.billing.plan.list()
+    .then((result) => {
+        const plan = result[0] || null
+        if (plan) {
+            const updDetails = { name:'Monthly Regular Billing'}
+            plan.update(updDetails)
+                .then((result) => { console.log("Plan is updated:", result) })
+                .catch((erro) => { console.log('We have a problem ', erro) })
+        }
+    })
+    .catch((erro) => { console.log('We have a problem ', erro); })
+```
+```javascript
+// Update plan when know the ID
+const updDetails = { name:'Monthly Regular BBilling'}
+payarc.billing.plan.update('plan_d84560e2', updDetails)
+    .then((result) => { console.log("Plan is updated:", result) })
+    .catch((erro) => { console.log('We have a problem ', erro) })
+```
+
+### Creating Subscriptions
+Once you have created subscription plans, the next step is to manage customer subscriptions. This involves subscribing customers to the plans they choose and managing their billing information. Our SDK makes it easy to handle these tasks. Here's how you can subscribe a customer to a plan:
+
+```javascript
+// Create a subscription over plan object
+payarc.billing.plan.list({search:'iron'})
+.then((result)=>{
+    if(result.length){
+        const sub = {
+            customer_id:'cus_DPAnVxAKPPjjVpKM'
+        }
+        result[0].createSubscription(sub)
+        .then((subs) => { console.log("New subscription:", subs) })
+        .catch((erro) => { console.log('We have a problem ', erro) })
+    }
+})
+.catch((erro)=>{console.log('We have a problem ', erro);})
+```
+```javascript
+// Create a subscription with plan id
+payarc.billing.plan.createSubscription('plan_d84560e2',{customer_id:'cus_DPAnVxAKPPjjVpKM'})
+    .then((subs) => { console.log("New subscription:", subs) })
+    .catch((erro) => { console.log('We have a problem ', erro) })
+```
+This code subscribes a customer to the premium plan using their saved payment method. The SDK handles the rest, including storing the subscription details and scheduling the billing cycle.
+
+### Listing Subscriptions
+To collect already created subscriptions you can use method `list` as in the example 
+
+```javascript
+// List all subscriptions
+payarc.billing.plan.subscription.list({})
+    .then((result) => { 
+        console.log("Available subscriptions ", result)
+     })
+    .catch((erro) => { console.log('We have a problem ', erro) })
+```
+you can sent parameters to filter on result for example the quantity and the plan
+```javascript
+// List plan details for 2 subscriptions from a plan
+payarc.billing.plan.subscription.list({limit:2, plan:'plan_7186b92f'})
+    .then((result) => { 
+        console.log("Plan for first subscription ", result[0].plan)
+        console.log("Available subscriptions ", result)
+        result.map((sub)=>{console.log(sub.plan);})
+     })
+    .catch((erro) => { console.log('We have a problem ', erro) })
+```
+
+### Updating Subscription
+To manipulate subscription SDK is providing few methods `update` and `cancel`, both can be used with identifier of subscription or over subscription object. Examples of their invocations:
+```javascript
+//Cancel subscription with ID
+payarc.billing.plan.subscription.cancel('sub_R0lVAjR0VPAjgPrx')
+    .then((subs) => { console.log("Cancelled subscription:", subs) })
+    .catch((erro) => { console.log('We have a problem ', erro) })
+
+```
+
+```javascript
+//Update subscription with ID
+payarc.billing.plan.subscription.update('sub_R0lVAjR0VPAjgPrx',{description:'Monthly for VIP'})
+    .then((subs) => { console.log("Updated subscription:", subs) })
+    .catch((erro) => { console.log('We have a problem ', erro) })
+```
+
+
 This documentation should help you understand how to use the Payarc SDK to manage charges and customers. If you have any questions, please refer to the Payarc API documentation or contact support.

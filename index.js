@@ -49,6 +49,21 @@ class Payarc {
             update: this.updateCampaign.bind(this),
             listAccounts: this.getAllAccounts.bind(this)
         }
+        this.billing /*recurring*/ = {
+            plan:{
+                create: this.createPlan.bind(this),
+                list: this.listPlan.bind(this),
+                retrieve: this.getPlan.bind(this),
+                update: this.updatePlan.bind(this),
+                delete: this.deletePlan.bind(this),
+                createSubscription: this.createSubscription.bind(this),
+                subscription:{
+                    list: this.getAllSubscriptions.bind(this),
+                    cancel: this.cancelSubscription.bind(this),
+                    update: this.updateSubscription.bind(this)
+                }
+            }
+        } 
 
     }
     /**
@@ -563,6 +578,135 @@ class Payarc {
         }
     }
 
+    //Recurrent payments
+    async createPlan(data){
+        if(!data.currency){
+            data.currency = 'usd'
+        }
+        if(!data.plan_type){
+            data.plan_type = 'digital'
+        }
+        try {
+            const response = await axios.post(`${this.baseURL}plans`,
+                data,
+                {
+                    headers: { Authorization: `Bearer ${this.bearerToken}` }
+                });
+            return this.addObjectId(response.data.data)
+        } catch (error) {
+            return this.manageError({ source: 'API Create plan ...' }, error.response || {});
+        }
+    }
+    async getPlan(params){
+        const data = params.object_id? params.object_id:params
+        try {
+            const response = await axios.get(`${this.baseURL}plans/${data}`, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` }
+            });
+            return this.addObjectId(response.data.data || {})
+
+        } catch (error) {
+            return this.manageError({ source: 'API get plan details' }, error.response || {});
+        }
+
+    }
+    async listPlan(params){
+        try {
+            if(!params){
+                params = {}
+            }
+            if(!params.limit){
+                params.limit = "99999"}
+            const response = await axios.get(`${this.baseURL}plans`, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` },
+                params:{...params}
+            });
+            return this.addObjectId(response.data.data || {})
+
+        } catch (error) {
+            return this.manageError({ source: 'API get all plans' }, error.response || {});
+        }
+    }
+    async updatePlan(params, newData){
+        const dataId = params.object_id? params.object_id:params
+        try {
+            const response = await axios.patch(`${this.baseURL}plans/${dataId}`, newData, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` }
+            });
+            return this.addObjectId(response.data.data)
+        } catch (error) {
+            return this.manageError({ source: 'API update customer info' }, error.response || {});
+        }
+    }
+     async deletePlan(params){
+        const data = params.object_id? params.object_id:params
+    }
+    async getAllSubscriptions(params){
+        try {
+            if(!params){
+                params = {}
+            }
+            if(!params.limit){
+                params.limit = "99999"}
+            const response = await axios.get(`${this.baseURL}subscriptions`, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` },
+                params:{...params}
+            });
+            return this.addObjectId(response.data.data || {})
+
+        } catch (error) {
+            return this.manageError({ source: 'API get all subscriptions' }, error.response || {});
+        }
+    }
+    async createSubscription(params, newData){
+       
+        try {
+            const dataId = params.object_id? params.object_id:params
+            if(!newData){
+                newData = {}
+            }
+            newData.plan_id = dataId
+            newData.customer_id = newData.customer_id.startsWith('cus_') ? newData.customer_id.slice(4) : newData.customer_id
+            console.log('createSubscription',params, newData);
+            const response = await axios.post(`${this.baseURL}subscriptions`, newData, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` }
+            });
+            return this.addObjectId(response.data.data)
+        } catch (error) {
+            return this.manageError({ source: 'API Create subscription' }, error.response || {});
+        }
+    }
+    async cancelSubscription(params){
+        try {
+            let dataId = params.object_id? params.object_id:params
+            dataId = dataId.startsWith('sub_') ? dataId.slice(4) : dataId
+            const response = await axios.patch(`${this.baseURL}subscriptions/${dataId}/cancel`, {}, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` }
+            });
+            return this.addObjectId(response.data.data)
+        } catch (error) {
+            return this.manageError({ source: 'API update customer info' }, error.response || {});
+        }
+
+    }
+    async updateSubscription(params, newData){
+        try {
+            let dataId = params.object_id? params.object_id:params
+            dataId = dataId.startsWith('sub_') ? dataId.slice(4) : dataId
+            const response = await axios.patch(`${this.baseURL}subscriptions/${dataId}`, newData, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` }
+            });
+            return this.addObjectId(response.data.data)
+        } catch (error) {
+            return this.manageError({ source: 'API update customer info' }, error.response || {});
+        }
+
+    }
+
+
+
+
+
     addObjectId(object) {
         const handleObject = (obj) => {
             if (obj.id || obj.customer_id) {
@@ -608,6 +752,10 @@ class Payarc {
                     obj.retrieve = this.getDtlCampaign.bind(this, obj)
                 } else if(obj.object === 'User'){
                     obj.object_id = `usr_${obj.id}`
+                } else if(obj.object === 'Subscription'){
+                    obj.object_id = `sub_${obj.id}`
+                    obj.cancel = this.cancelSubscription.bind(this, obj)
+                    obj.update = this.updateSubscription.bind(this, obj)
                 }
             } else if (obj.MerchantCode) {
                 obj.object_id = `appl_${obj.MerchantCode}`
@@ -619,6 +767,15 @@ class Payarc {
                 obj.submit = this.submitApplicantForSignature.bind(this,obj)
                 obj.update = this.updateApplicant.bind(this, obj)
                 obj.listSubAgents= this.SubAgents.bind(this,obj)
+            } else if(obj.plan_id){ //This is plan object
+                obj.object_id = obj.plan_id
+                obj.object = 'Plan'
+                delete obj.plan_id
+                //add functions
+                obj.retrieve = this.getPlan.bind(this, obj)
+                obj.update = this.updatePlan.bind(this,obj)
+                obj.delete = this.deletePlan.bind(this,obj)
+                obj.createSubscription = this.createSubscription.bind(this, obj)
             }
 
             for (const key in obj) {
