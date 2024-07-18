@@ -92,6 +92,25 @@ Object payarc.applications is used by Agents and ISVs to manage candidate mercha
             deleteDocument - this function removes document, when document is no longer valid.
             submit - this function initialize the process of sing off contract between Payarc and your client
             
+### Object payarc.billing
+This object is aggregating other objects responsible for recurrent payments. Nowadays they are `plan` and `subscription`.
+
+### Object payarc.billing.plan
+This object contains information specific for each plan like identification details, rules for payment request and additional information. This object ahs methods for:
+                create - you can programmatically created new objects to meet client's needs,
+                list - inquiry available plans,
+                retrieve - collect detailed information for a plan,
+                update - modify details of a plan,
+                delete - remove plan when no longer needed,
+                createSubscription: issue a subscription for a customer from a plan.
+Based on plans you can create subscription. Time scheduled job will request and collect payments (charges) according plan schedule from customer
+
+### Object payarc.billing.plan.subscription
+This abstraction encapsulate information for subscription the link between customer and plan. it has following methods:
+                    list - enumerate subscriptions,
+                    cancel - stop and cancel active subscription,
+                    update - modify details of a subscription
+
 
 First, initialize the Payarc SDK with your API key:
 
