@@ -638,8 +638,8 @@ class Payarc {
             return this.manageError({ source: 'API update customer info' }, error.response || {});
         }
     }
-     async deletePlan(params){
-        const data = params.object_id? params.object_id:params
+    async deletePlan(params) {
+        const data = params.object_id ? params.object_id : params
     }
     async getAllSubscriptions(params){
         try {
