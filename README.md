@@ -440,6 +440,52 @@ payarc.customers.retrieve('cus_AnonymizedCustomerID')
     })
     .catch(error => console.error(error));
 ```
+
+## Manage Disputes
+A dispute in the context of payment processing refers to a situation where a cardholder questions the validity of a transaction that appears on their statement. This can lead to a chargeback, where the transaction amount is reversed from the merchant's account and credited back to the cardholder. A cardholder sees a transaction on their account that they believe is incorrect or unauthorized. This could be due to various reasons such as fraudulent activity, billing errors, or dissatisfaction with a purchase. The cardholder contacts their issuing bank to dispute the transaction. They may provide details on why they believe the transaction is invalid. The issuing bank investigates the dispute. This may involve gathering information from the cardholder and reviewing the transaction details. The issuing bank communicates the dispute to the acquiring bank (the merchant's bank) through the card network (in your case Payarc). The merchant is then required to provide evidence to prove the validity of the transaction, such as receipts, shipping information, or communication with the customer. Based on the evidence provided by both the cardholder and the merchant, the issuing bank makes a decision. If the dispute is resolved in favor of the cardholder, a chargeback occurs, and the transaction amount is deducted from the merchant's account and credited to the cardholder. If resolved in favor of the merchant, the transaction stands.
+### Inquiry Dispute 
+The SDK provide a function to list your disputes. you can provide query parameters to specify the constraints over the function. when sent with no parameters it returns all disputes in the past one month
+```javascript
+// //list disputes with no constraints
+payarc.disputes.list()
+    .then((result) => { console.log("Your disputes are:", result) })
+    .catch((erro) => { console.log('We have a problem ', erro) })
+
+```
+
+You can get details for a dispute by `retrieve` function. the identifier is returned by `list` function
+
+```javascript
+// Retrieve details for dispute 
+payarc.disputes.retrieve('dis_MVB1AVdssRM1wAW0')
+    .then((result) => { console.log("Your dispute is:", result) })
+    .catch((erro) => { console.log('We have a problem ', erro) })
+
+```
+### Submit Cases
+In order to resolve the dispute in your(merchant's) flavour, the merchant is  required to provide evidence to prove the validity of the transaction, such as receipts, shipping information, or communication with the customer. The SDK provides a function `addDocument` that allows you to provide files and write messages to prove that you have rights to keep the mony for the transaction. First parameter of this function is the identifier of the dispute for which the evidence is. Next parameter is an object with following attributes:
+- DocumentDataBase64: base46 representation of the files that will be used as evidence 
+- text: short text to describe the evidence
+- mimeType: type of the provided file
+- message: Description of submitted case
+For more information for parameters and their attributes check documentation
+
+```javascript
+// Add document to a dispute
+const DocumentDataBase64 = "iVBORw0KGgoAAAANSUhEUgAAAIUAAABsCAYAAABEkXF2AAAABHNCSVQICAgIfAhkiAAAAupJREFUeJzt3cFuEkEcx/E/001qUQ+E4NF48GB4BRM9+i59AE16ANlE4wv4Mp5MjI8gZ+ONEMJBAzaWwZsVf2VnstPZpfb7STh06ewu5JuFnSzQ8d5vDfiLa3sHcHiIAoIoIIgCgiggitwbWM/f2vniTe7NoIZ7Dz9Y0X0qy7NHYfbLtn6dfzOoYXPlUl4+IIgCooGXj10ngzM77p81vVmY2Y9vL+xi9Tn4f41HYVZYx3Wb3yws9oWBlw8IooAgCgiigCAKCKKAIAoIooAgCoikGU3nqpvy3qesPvv6+/2+LZfLpHUcsrrPD0cKCKKAIAoIooAgCgiigCAKCOecs7q3iJXbZDLZWVaWZfR4733lLbfZbBbchzZvvV4vy+PmSAFBFBBEAUEUEEQBQRQQRAFR5DzfD81FxMxVpMg9l3HT938fjhQQRAFBFBBEAUEUEEQBQRQQRe5z7SptnYejGkcKCKKAIAoIooAgCgiigCAKiKQoYj6bMB6Pd8aMRqPoz22kfCalzfmXm45nDoIoIIgCgiggiAKCKCCIAiJrFKnfTxHS9vdX5P7+ibZwpIAgCgiigCAKCKKAIAoIooDomNl2352hc+WY3+NYzyf2c345V3EyGNmdwevo8anbr3Lbfu/j+9fndrH69Ofv+48+WtF9JuM4UkAQBQRRQBAFBFFAEAUEUUBUfo9m6jUPzjl7eWr26vRyWVmW9u59GT2+Suo1B4vFImn8/4ojBQRRQBAFBFFAEAUEUUAQBUTHe7/3eorUeYrQ9RSprmP/UtZ/6OP/xfUUqI0oIIgCgiggiqY36Ddz25x/uZZ1PXmcNj60H6H1H/p4sV1F/VvjZx84HJx9IFrl733wexy3U/b3FO7ogR0dD7OsezqdVt4/HFZvNzQ+t9T9C40P6ty9erElfEKsbblnDHNrekYzFu8pIIgCgiggiAKCKCAqzz5Ccr+7T3133fb1DG0//ro4UkAQBQRRQBAFBFFAEAXEb3wL3JblytFeAAAAAElFTkSuQmCC"
+
+payarc.disputes.addDocument('dis_MVB1AVdssRM1wAW0',{'DocumentDataBase64':DocumentDataBase64, text:'It is the true true'})
+    .then((result) => { console.log("Your result is:", result) })
+    .catch((erro) => { console.log('We have a problem ', erro) })
+
+```
+
+
+
+
+
+
+
 ## Manage Candidate Merchants
 ### Create new Candidate Merchant
 In the process of connecting your clients with Payarc a selection is made based on Payarc's criteria. Process begins with filling information for the merchant and creating an entry in the database. Here is an example how this process could start

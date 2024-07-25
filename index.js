@@ -63,7 +63,12 @@ class Payarc {
                     update: this.updateSubscription.bind(this)
                 }
             }
-        } 
+        }
+        this.disputes = {
+            list: this.listCases.bind(this),
+            retrieve: this.getCase.bind(this),
+            addDocument: this.addDocumentCase.bind(this)
+        }
 
     }
     /**
@@ -348,7 +353,7 @@ class Payarc {
     // this method is a wrapper of API add-lead
     async addLead(applicant) {
         try {
-            if(applicant.agentId && applicant.agentId.startsWith('usr_')){
+            if (applicant.agentId && applicant.agentId.startsWith('usr_')) {
                 applicant.agentId = applicant.agentId.slice(4)
             }
             const resp = await axios.post(`${this.baseURL}agent-hub/apply/add-lead`, applicant, {
@@ -407,7 +412,7 @@ class Payarc {
             dataId = dataId.slice(5)
         }
         try {
-            newData = Object.assign({    
+            newData = Object.assign({
                 "bank_account_type":"01",
                 "slugId":"financial_information",
                 "skipGIACT": true}, 
@@ -453,7 +458,7 @@ class Payarc {
                 });
             return this.addObjectId(response.data)
         } catch (error) {
-            
+
             return this.manageError({ source: 'API Apply documents add' }, error.response || {});
         }
     }
@@ -659,7 +664,7 @@ class Payarc {
         }
     }
     async createSubscription(params, newData){
-       
+
         try {
             const dataId = params.object_id? params.object_id:params
             if(!newData){
@@ -667,8 +672,7 @@ class Payarc {
             }
             newData.plan_id = dataId
             newData.customer_id = newData.customer_id.startsWith('cus_') ? newData.customer_id.slice(4) : newData.customer_id
-            console.log('createSubscription',params, newData);
-            const response = await axios.post(`${this.baseURL}subscriptions`, newData, {
+             const response = await axios.post(`${this.baseURL}subscriptions`, newData, {
                 headers: { Authorization: `Bearer ${this.bearerToken}` }
             });
             return this.addObjectId(response.data.data)
@@ -702,8 +706,98 @@ class Payarc {
         }
 
     }
+    async listCases(params) {
+        const formatDate = (date) => date.toISOString().split('T')[0]; //function to convert dates
+        try {
+            if (!params) {
+                const currentDate = new Date()
+                const tomorrowDate = formatDate(new Date(currentDate.setDate(currentDate.getDate() + 1)))
+                currentDate.setMonth(currentDate.getMonth() - 1)
+                const lastMonthDate = formatDate(currentDate)
+                params = {
+                    'report_date[gte]': lastMonthDate,
+                    'report_date[lte]': tomorrowDate
+                }
+            }
 
+            const response = await axios.get(`${this.baseURL}cases`, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` },
+                params: { ...params }
+            });
+            return this.addObjectId(response.data.data || {})
 
+        } catch (error) {
+            return this.manageError({ source: 'API get all disputes' }, error.response || {});
+        }
+    }
+    async getCase(params) {
+        let data = params.object_id ? params.object_id : params
+        data = data.startsWith('dis_') ? data.slice(4) : data
+        try {
+            const response = await axios.get(`${this.baseURL}cases/${data}`, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` }
+            });
+            return this.addObjectId(response.data.primary_case.data || {})
+
+        } catch (error) {
+            return this.manageError({ source: 'API get dispute details' }, error.response || {});
+        }
+    }
+    async addDocumentCase(dispute, params) {
+        try {
+            let disputeId = dispute.object_id ? dispute.object_id : dispute
+            if (disputeId.startsWith('dis_')) {
+                disputeId = disputeId.slice(4)
+            }
+            let headers = {}
+            let formData = '';
+            let formDataBuffer = null
+            if (params && params.DocumentDataBase64) {
+                const binaryFile = Buffer.from(params.DocumentDataBase64, 'base64')
+                const boundary = '----WebKitFormBoundary' + '3OdUODzy6DLxDNt8' //Create a unique boundary
+
+                formData += `--${boundary}\r\n`;
+                formData += 'Content-Disposition: form-data; name="file"; filename="filename1.png"\r\n';
+                formData += `Content-Type: ${ params.mimeType || 'application/pdf'}\r\n\r\n`; 
+                formData += binaryFile.toString('binary');
+                formData += `\r\n--${boundary}--\r\n`;
+                if (params.text) {
+                    formData += `--${boundary}\r\n`;
+                    formData += 'Content-Disposition: form-data; name="text"\r\n\r\n';
+                    formData += params.text
+                    formData += `\r\n--${boundary}--\r\n`;
+                }
+                // Convert formData to a buffer
+                formDataBuffer = Buffer.from(formData, 'binary');
+
+                headers = {
+                    'Content-Type': `multipart/form-data; boundary=${boundary}`,
+                    'Content-Length': formDataBuffer.length,
+                };
+
+            }
+
+            const response = await axios.post(`${this.baseURL}cases/${disputeId}/evidence`,
+                formDataBuffer
+                ,
+                {
+                    headers: { Authorization: `Bearer ${this.bearerToken}`, ...headers }
+                });
+
+            const subResponse = await axios.post(`${this.baseURL}cases/${disputeId}/submit`,
+
+                {
+                    message: `${params.message || 'Case number#: xxxxxxxx, submitted by SDK'}` 
+                }
+                ,
+                {
+                    headers: { Authorization: `Bearer ${this.bearerToken}`, }
+                });
+            return this.addObjectId(response.data)
+        } catch (error) {
+            return this.manageError({ source: 'API Dispute documents add' }, error.response || {});
+        }
+    }
 
 
 
@@ -740,22 +834,25 @@ class Payarc {
                     obj.retrieve = this.retrieveApplicant.bind(this, obj)
                     obj.delete = this.deleteApplicant.bind(this, obj)
                     obj.addDocument = this.addApplicantDocument.bind(this, obj)
-                    obj.submit = this.submitApplicantForSignature.bind(this,obj)
+                    obj.submit = this.submitApplicantForSignature.bind(this, obj)
                     obj.update = this.updateApplicant.bind(this, obj)
                     obj.listSubAgents = this.SubAgents.bind(this, obj)
                 } else if (obj.object === 'ApplyDocuments') {
                     obj.object_id = `doc_${obj.id}`
                     obj.delete = this.deleteApplicantDocument.bind(this, obj)
-                } else if(obj.object === 'Campaign'){
+                } else if (obj.object === 'Campaign') {
                     obj.object_id = `cmp_${obj.id}`
                     obj.update = this.updateCampaign.bind(this, obj)
                     obj.retrieve = this.getDtlCampaign.bind(this, obj)
-                } else if(obj.object === 'User'){
+                } else if (obj.object === 'User') {
                     obj.object_id = `usr_${obj.id}`
-                } else if(obj.object === 'Subscription'){
+                } else if (obj.object === 'Subscription') {
                     obj.object_id = `sub_${obj.id}`
                     obj.cancel = this.cancelSubscription.bind(this, obj)
                     obj.update = this.updateSubscription.bind(this, obj)
+                } else if (obj.object === "Cases") {
+                    obj.object = "Dispute"
+                    obj.object_id = `dis_${obj.id}`
                 }
             } else if (obj.MerchantCode) {
                 obj.object_id = `appl_${obj.MerchantCode}`
@@ -764,17 +861,17 @@ class Payarc {
                 obj.retrieve = this.retrieveApplicant.bind(this, obj)
                 obj.delete = this.deleteApplicant.bind(this, obj)
                 obj.addDocument = this.addApplicantDocument.bind(this, obj)
-                obj.submit = this.submitApplicantForSignature.bind(this,obj)
+                obj.submit = this.submitApplicantForSignature.bind(this, obj)
                 obj.update = this.updateApplicant.bind(this, obj)
-                obj.listSubAgents= this.SubAgents.bind(this,obj)
-            } else if(obj.plan_id){ //This is plan object
+                obj.listSubAgents = this.SubAgents.bind(this, obj)
+            } else if (obj.plan_id) { //This is plan object
                 obj.object_id = obj.plan_id
                 obj.object = 'Plan'
                 delete obj.plan_id
                 //add functions
                 obj.retrieve = this.getPlan.bind(this, obj)
-                obj.update = this.updatePlan.bind(this,obj)
-                obj.delete = this.deletePlan.bind(this,obj)
+                obj.update = this.updatePlan.bind(this, obj)
+                obj.delete = this.deletePlan.bind(this, obj)
                 obj.createSubscription = this.createSubscription.bind(this, obj)
             }
 
