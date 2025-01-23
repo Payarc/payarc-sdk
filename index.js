@@ -17,6 +17,9 @@ class Payarc {
         this.baseURL = (apiVersion === '/v1/') ? `${this.baseURL}${apiVersion}` : `${this.baseURL}/v${apiVersion}/`
         this.bearerTokenAgent = bearerTokenAgent
 
+        this.payarcConnectBaseUrl = (baseUrl == 'prod') ? 'https://payarcconnectapi.curvpos.com' : 'https://payarcconnectapi.curvpos.dev'
+        this.payarcConnectAccessToken = ""
+
 
         // Initialize the charges object
         this.charges = {
@@ -68,6 +71,19 @@ class Payarc {
             list: this.listCases.bind(this),
             retrieve: this.getCase.bind(this),
             addDocument: this.addDocumentCase.bind(this)
+        }
+
+        this.payarcConnect = {
+            login: this.pcLogin.bind(this),
+            sale: this.pcSale.bind(this),
+            void: this.pcVoid.bind(this),
+            refund: this.pcRefund.bind(this),
+            // blindCredit:,
+            auth: this.pcAuth.bind(this),
+            postAuth: this.pcPostAuth.bind(this),
+            lastTransaction: this.pcLastTransaction.bind(this),
+            serverInfo: this.pcServerInfo.bind(this),
+            terminals: this.pcTerminals.bind(this),
         }
 
     }
@@ -799,7 +815,62 @@ class Payarc {
         }
     }
 
+    async pcLogin(email, mid, clientSecret){
+        const requestBody = {
+            Email: email,
+            MID: mid,
+            ClientSecret: clientSecret,
+            SecretKey: "" // todo: add bearer. Skip the rest here? Bearer is the only thing that makes this work it seems
+        };
+        try{
+            const response = await axios.post(`${this.payarcConnectBaseUrl}/Login`, requestBody)
+            const accessToken = response.data?.BearerTokenInfo?.AccessToken
+        
+            if(accessToken){    
+                this.payarcConnectAccessToken = accessToken
+            } else {
+                return this.payarcConnectError(response.data)
+            }
 
+            return response.data
+        } catch (error) {
+            return this.manageError({ source: 'Payarc Connect Login' }, error.response || {});
+        }
+    }
+
+    async pcSale(){
+
+    }
+
+    async pcVoid(){
+
+    }
+
+    async pcRefund(){
+
+    }
+
+    /* async pcBlindCredit(){} */
+
+    async pcAuth(){
+
+    }
+
+    async pcPostAuth(){
+
+    }
+
+    async pcLastTransaction(){
+
+    }
+
+    async pcServerInfo(){
+
+    }
+
+    async pcTerminals(){
+
+    }
 
     addObjectId(object) {
         const handleObject = (obj) => {
@@ -894,6 +965,7 @@ class Payarc {
     }
     //Function to manage error feedback
     manageError(seed = {}, error) {
+        console.log('errorRob', error)
         seed.object = `Error ${this.version}`
         seed.type = 'TODO put here error type'
         seed.errorMessage = error.statusText || 'unKnown'
@@ -903,6 +975,15 @@ class Payarc {
         seed.errorDataMessage = (error.data && error.data.message) || 'unKnown'
         return seed
         throw new Error(seed)
+    }
+
+    payarcConnectError(data){
+        console.log('data', data)
+        const error = {
+            statusText: data.ErrorMessage,
+            status: data.ErrorCode,
+        } 
+        return this.manageError({}, error)
     }
 }
 module.exports = Payarc;
