@@ -841,12 +841,12 @@ class Payarc {
         }
     }
 
-    async pcSale(tenderType, transType, ecrRefNum, amount, deviceSerialNo){
+    async pcSale(tenderType, ecrRefNum, amount, deviceSerialNo){
         const seed = { source: 'Payarc Connect Sale' }
         try {
             const requestBody = {
                 TenderType: tenderType,
-                TransType: transType,
+                TransType: "SALE",
                 ECRRefNum: ecrRefNum,
                 Amount: amount,
                 DeviceSerialNo: deviceSerialNo
