@@ -834,6 +834,134 @@ payarc.billing.plan.subscription.update('sub_R0lVAjR0VPAjgPrx',{description:'Mon
     .then((subs) => { console.log("Updated subscription:", subs) })
     .catch((erro) => { console.log('We have a problem ', erro) })
 ```
+ 
+# Payarc Connect
+The following functionality will pertain only to user who are utilizing the Payarc Connect integration:
+
+### Login
+This function must be called and completed before any other functionality can be used. 
+```javascript
+payarc.payarcConnect
+    .login()
+    .catch((error) => console.error("Error detected:", error));
+```
+
+### Sale
+Initiate a sale remotely on your PAX terminal
+
+| Parameter | Usage |
+| --- | --- |
+| TenderType | CREDIT, DEBIT |
+| ECRRefNum | Unique code for this transaction provided by the user. This code will be used later for **voids.** |
+| Amount | Amount to capture. Format is $$$$$$$CC |
+| DeviceSerialNo | Serial number of your PAX terminal |
+```javascript
+payarc.payarcConnect
+    .sale(tenderType = "CREDIT", ecrRefNum = "REF123", amount = "100", deviceSerialNo = "12345")
+    .then((result) => {  console.log("Result", result)})
+    .catch((error) => console.error("Error:", error))
+```
+
+### Void
+Initiate a void remotely on your PAX terminal
+
+| Parameter | Usage |
+| --- | --- |
+| PayarcTransactionId | Unique code of a previous transaction. Required to do a void. Charge ID on Payarc Portal. |
+| DeviceSerialNo | Serial number of your PAX terminal |
+```javascript
+    payarc.payarcConnect
+    .void(payarcTransactionId = "12345", deviceSerialNo = "12345")
+    .then((result) => {console.log("Result", result);})
+    .catch((error) => console.error("Error:", error));
+```
+### Refund
+Initiate a refund remotely on your PAX terminal
+
+| Parameter | Usage |
+| --- | --- |
+| Amount | Amount to capture. Format is $$$$$$$CC |
+| PayarcTransactionId | Unique code of a previous transaction. Required to do a refund. Charge ID on Payarc Portal. |
+| DeviceSerialNo | Serial number of your PAX terminal |
+```javascript
+    payarc.payarcConnect
+    .refund(amount = "100", payarcTransactionId = "12345", deviceSerialNo = "12345")
+    .then((result) => {console.log("Result", result);})
+    .catch((error) => console.error("Error:", error));
+```
+### Blind Credit
+Initiate a blind credit remotely on your PAX terminal
+
+| Parameter | Usage |
+| --- | --- |
+| ECRRefNum | Unique code for this transaction provided by the user. |
+| Amount | Amount to capture. Format is $$$$$$$CC |
+| Token | Required for Refund. Found in PaxResponse.ExtData |
+| ExpDate | Required for Refund. Found in PaxResponse.ExtData. Expiration date of card used in sale |
+| DeviceSerialNo | Serial number of your PAX terminal |
+```javascript
+    payarc.payarcConnect
+    .blindCredit(ecrRefNum = "REF123", amount = "100", token = "ABC123", expDate = "0000", deviceSerialNo = "12345")
+    .then((result) => {console.log("Result", result);})
+    .catch((error) => console.error("Error:", error));
+```
+### Auth
+Initiate an auth remotely on your PAX terminal
+
+| Parameter | Usage |
+| --- | --- |
+| ECRRefNum | Unique code for this transaction provided by the user |
+| Amount | Amount to capture. Format is $$$$$$$CC |
+| DeviceSerialNo | Serial number of your PAX terminal |
+```javascript
+    payarc.payarcConnect
+    .auth(ecrRefNum = "Ref123", amount = "100", deviceSerialNo = "12345")
+    .then((result) => {console.log("Result", result);})
+    .catch((error) => console.error("Error:", error));
+```
+### Post Auth
+Initiate a post auth remotely on your PAX terminal
+
+| Parameter | Usage |
+| --- | --- |
+| ECRRefNum | Unique code for this transaction provided by the user |
+| OrigRefNum | This number is obtained from the paymentResponse object from an auth transaction. |
+| Amount | Amount to capture. Cannot exceed auth amount. If you need to exceed the auth amount, perform another sale and the auth will fall off. Format is $$$$$$$CC |
+| DeviceSerialNo | Serial number of your PAX terminal |
+```javascript
+    payarc.payarcConnect
+    .postAuth(ecrRefNum = "Ref456", origRefNum = "123", amount = "100", deviceSerialNo = "12345")
+    .then((result) => {console.log("Result", result);})
+    .catch((error) => console.error("Error:", error));
+```
+### Last Transaction
+Returns the response object from the last transaction
+
+```javascript
+    payarc.payarcConnect
+    .lastTransaction(deviceSerialNo = "12345")
+    .then((result) => {console.log("Result", result);})
+    .catch((error) => console.error("Error:", error));
+```
+### Server Info
+ Returns the status of the server
+
+```javascript
+    payarc.payarcConnect
+    .serverInfo()
+    .then((result) => {console.log("Result", result);})
+    .catch((error) => console.error("Error:", error));
+```
+
+### Terminals
+Returns a list of registered terminal for merchant
+
+```javascript
+    payarc.payarcConnect
+    .terminals()
+    .then((result) => {console.log("Result", result);})
+    .catch((error) => console.error("Error:", error));
+```
 
 
 This documentation should help you understand how to use the Payarc SDK to manage charges and customers. If you have any questions, please refer to the Payarc API documentation or contact support.
