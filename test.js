@@ -42,14 +42,23 @@ payarc.splitCampaigns
 payarc.billing
 payarc.disputes */
 
-payarc.payarcConnect
-  .login(
-    "",
-    "",
-    ""
-  )
-  .then((charge) => {
-    console.log("Success", charge);
-    console.log(payarc.payarcConnectAccessToken);
-  })
+/* payarc.payarcConnect
+  .login()
   .catch((error) => console.error("Error detected:", error));
+ */
+
+async function sale() {
+    await payarc.payarcConnect
+    .login()
+    .catch((error) => console.error("Error detected:", error));
+
+    payarc.payarcConnect
+    .sale("CREDIT", "SALE", "REF16", "16", "1850107986")
+    .then((result) => {
+      console.log("Success", result);
+    })
+    .catch((error) => console.error("Error detected:", error));
+      
+}
+
+sale()

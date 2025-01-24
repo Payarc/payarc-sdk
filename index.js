@@ -19,6 +19,11 @@ class Payarc {
 
         this.payarcConnectBaseUrl = (baseUrl == 'prod') ? 'https://payarcconnectapi.curvpos.com' : 'https://payarcconnectapi.curvpos.dev'
         this.payarcConnectAccessToken = ""
+        this.testResponse = {
+            PaxResponse: '{"AddlRspData":{"ACI":"","AthNtwkID":"","BankNetData":"","CVVErrorCode":"","CardLevelResult":"","DiscNRID":"","DiscPOSEntry":"","DiscProcCode":"","DiscRespCode":"","DiscTransQualifier":"","EMVTags":"","LocalDateTime":"","OrigSTAN":"","POSData":"","POSEntryMode":"","POSEntryModeChg":"","ServCode":"","SourceReasonCode":"","SpendQInd":"","TermEntryCapablt":"","TranEditErrCode":"","TransID":"","TrnmsnDateTime":"","WltID":"","XCodeResp":""},"ApprovedAmount":"88","ApprovedCashBackAmount":"0","ApprovedMerchantFee":"0","ApprovedTaxAmount":"0","ApprovedTipAmount":"0","AuthCode":"083205","AuthorizationResponse":"","AvsResponse":"","BogusAccountNum":"5228","CardInfo":{"CardBin":"408540","NewCardBin":"","ProgramType":"0"},"CardType":"VISA","CvResponse":"Match","DebitAccountType":"","ECRTransID":"","EDCType":"","ExtData":"<HostTraceNum>9</HostTraceNum><BatchNum>0</BatchNum><TransactionIdentifier>385024523253539</TransactionIdentifier><AmountDue>0</AmountDue><TipAmount>0</TipAmount><CashBackAmount>0</CashBackAmount><MerchantFee>0</MerchantFee><TaxAmount>0</TaxAmount><ServiceFee>0</ServiceFee><PLEntryMode>0</PLEntryMode><ExpDate>0227</ExpDate><CVVMessage>Values match</CVVMessage><PLCardPresent>1</PLCardPresent><ECRRefNum>REF101</ECRRefNum><CARDBIN>408540</CARDBIN><GlobalUID>1850107986202501240931492154</GlobalUID><UserLanguageStatus>1</UserLanguageStatus><PROGRAMTYPE>0</PROGRAMTYPE><SN>1850107986</SN><EDCTYPE>Credit</EDCTYPE><PayarcChargeId>WBMROoRyXXyXnOyn</PayarcChargeId>","ExtraBalance":"","FleetCard":{"CustomerData":"","DepartmentNumber":"","DriverId":"","EmployeeNumber":"","FleetPromptCode":"","JobId":"","JobNumber":"","LicenseNumber":"","Odometer":"","UserId":"","VehicleId":"","VehicleNumber":""},"GatewayTransactionID":"","GiftCardType":"","HostCode":"8","HostDetailedMessage":"","HostResponse":"000","IssuerResponseCode":"","MaskedPAN":"","Message":"APPROVAL","MultiMerchant":{"Id":"","Name":""},"PayloadData":"","PaymentAccountReferenceID":"","PaymentEmvTag":{"Ac":"","Aip":"","Auc":"","Avn":"","Cdol2":"","Hred":"","IacDefault":"","IacDenial":"","IacOnline":"","IssuerAuthData":"","PanSeqNum":"","TacDefault":"","TacDenial":"","TacOnline":"","Aid":"","AppLabel":"","AppPreferName":"","Arc":"","Arqc":"","Atc":"","Cid":"","Cvm":"","Iad":"","Tc":"","Tsi":"","Tvr":""},"PaymentService2000":"","PaymentTransInfo":{"EdcType":"Credit","EwicBalance":"","EwicBenefitExpd":"","EwicDetail":"","OrigTip":"","PrintLine1":"","PrintLine2":"","PrintLine3":"","PrintLine4":"","PrintLine5":"","ReversalStatus":"","ReverseAmount":"","TokenSerialNum":"","ChargedAmount":"","DiscountAmount":"","Fps":"","FpsReceipt":"","FpsSignature":"","GlobalUid":"1850107986202501240931492154","HRef":"","HostEchoData":"","PinStatusNum":"","SN":"1850107986","SettlementDate":"","SignatureStatus":"","Token":"","UserLanguageStatus":"1","ValidationCode":""},"RawResponse":"","RefNum":"10","RemainingBalance":"","RequestedAmount":"88","Restaurant":{"GuestNumber":"","TableNumber":"","TicketNumber":""},"ResultCode":"000000","ResultTxt":"OK","RetrievalReferenceNumber":"","SigFileName":"","SignData":"","TORResponseInfo":{"BatchNo":"","GatewayTransactionID":"","HostReferenceNumber":"","HostResponseCode":"","HostResponseMessage":"","MaskedPAN":"","OrigAmount":"","OrigTransAuthCode":"","OrigTransDateTime":"","OrigTransType":"","RecordType":"","ReversalAuthCode":"","ReversalTimeStamp":""},"Timestamp":"20250124093149","Track1Data":"","Track2Data":"","Track3Data":"","TransactionIntegrityClass":"","TransactionRemainingAmount":"0","VASResponseInfo":{"NDEFData":"","VASCode":""},"resultCode":"","resultTxt":"","AmpInvoiceNo":null}',
+            ErrorCode: 0,
+            ErrorMessage: ''
+          }
 
 
         // Initialize the charges object
@@ -815,18 +820,15 @@ class Payarc {
         }
     }
 
-    async pcLogin(email, mid, clientSecret){
+    async pcLogin(){
         const requestBody = {
-            Email: email,
-            MID: mid,
-            ClientSecret: clientSecret,
-            SecretKey: "" // todo: add bearer. Skip the rest here? Bearer is the only thing that makes this work it seems
+            SecretKey: this.bearerToken
         };
         try{
             const response = await axios.post(`${this.payarcConnectBaseUrl}/Login`, requestBody)
             const accessToken = response.data?.BearerTokenInfo?.AccessToken
         
-            if(accessToken){    
+            if(accessToken){ 
                 this.payarcConnectAccessToken = accessToken
             } else {
                 return this.payarcConnectError(response.data)
@@ -838,8 +840,25 @@ class Payarc {
         }
     }
 
-    async pcSale(){
-
+    async pcSale(tenderType, transType, ecrRefNum, amount, deviceSerialNo){
+        try {
+            const requestBody = {
+                TenderType: tenderType,
+                TransType: transType,
+                ECRRefNum: ecrRefNum,
+                Amount: amount,
+                DeviceSerialNo: deviceSerialNo
+            };
+            const response = await axios.post(`${this.payarcConnectBaseUrl}/Transactions`, requestBody, {
+                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}` }
+            });
+            if(response.data?.ErrorCode != 0){
+                return this.payarcConnectError(response.data)
+            }
+            return response.data
+        } catch (error) {
+            return this.manageError({ source: 'Payarc Connect Sale' }, error.response || {});
+        }
     }
 
     async pcVoid(){
@@ -965,7 +984,6 @@ class Payarc {
     }
     //Function to manage error feedback
     manageError(seed = {}, error) {
-        console.log('errorRob', error)
         seed.object = `Error ${this.version}`
         seed.type = 'TODO put here error type'
         seed.errorMessage = error.statusText || 'unKnown'
@@ -978,12 +996,12 @@ class Payarc {
     }
 
     payarcConnectError(data){
-        console.log('data', data)
         const error = {
             statusText: data.ErrorMessage,
             status: data.ErrorCode,
         } 
         return this.manageError({}, error)
     }
+
 }
 module.exports = Payarc;
