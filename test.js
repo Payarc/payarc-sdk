@@ -1,5 +1,3 @@
-/* Delete me!! */
-
 const Payarc = require("./index");
 
 const bearerToken =
@@ -17,43 +15,13 @@ const payarc = new Payarc(
   bearerTokenAgent
 );
 
-/* payarc.charges.create({
-        amount: 1, // Amount in cents
-        currency: 'usd', // Currency code (e.g., 'usd')
-    source:{
-        card_number: '4085404032505228', // Payment source (e.g., credit card number)
-        exp_month: '02',  //Credit card attributes 
-        exp_year: '2027', //Credit card attributes 
-        }
-    })
-        .then(charge => console.log('Success the charge is ',charge))
-        .catch(error => console.error('Error detected:',error)); */
-
-/* payarc.billing.plan.subscription
-  .list()
-  .then((subscription) =>
-    console.log("Success the subscription is ", subscription)
-  );
-
-payarc.charges
-payarc.customers
-payarc.applications
-payarc.splitCampaigns
-payarc.billing
-payarc.disputes */
-
-/* payarc.payarcConnect
-  .login()
-  .catch((error) => console.error("Error detected:", error));
- */
-
 async function sale() {
     await payarc.payarcConnect
     .login()
     .catch((error) => console.error("Error detected:", error));
 
     payarc.payarcConnect
-    .sale("CREDIT", "SALE", "REF16", "16", "1850107986")
+    .sale("CREDIT", "SALE", "REF99", "99", "1850406725")
     .then((result) => {
       console.log("Success", result);
     })
@@ -61,4 +29,123 @@ async function sale() {
       
 }
 
-sale()
+
+async function pcVoid() {
+    await payarc.payarcConnect
+    .login()
+    .catch((error) => console.error("Error detected:", error));
+
+    payarc.payarcConnect
+    .void("REF16", "WBMROoRyXoMRXOyn", "1850406725")
+    .then((result) => {
+      console.log("Success", result);
+    })
+    .catch((error) => console.error("Error detected:", error));
+      
+}
+
+async function refund() {
+    await payarc.payarcConnect
+    .login()
+    .catch((error) => console.error("Error detected:", error));
+
+    payarc.payarcConnect
+    .refund("15", "DMWbOLoXnBWWoOBX", "1850406725")
+    .then((result) => {
+      console.log("Success", result);
+    })
+    .catch((error) => console.error("Error detected:", error));
+      
+}
+
+async function blindCredit() {
+    await payarc.payarcConnect
+    .login()
+    .catch((error) => console.error("Error detected:", error));
+
+    payarc.payarcConnect
+    .blindCredit("Ref11", "15", "IYmDAxNtma7g5228", "0227", "1850406725")
+    .then((result) => {
+      console.log("Success", result);
+    })
+    .catch((error) => console.error("Error detected:", error));
+      
+}
+async function auth() {
+    await payarc.payarcConnect
+    .login()
+    .catch((error) => console.error("Error detected:", error));
+
+    payarc.payarcConnect
+    .auth("Ref11", "111", "1850406725")
+    .then((result) => {
+      console.log("Success", result);
+    })
+    .catch((error) => console.error("Error detected:", error));
+      
+}
+
+async function postAuth() {
+    await payarc.payarcConnect
+    .login()
+    .catch((error) => console.error("Error detected:", error));
+
+    payarc.payarcConnect
+    .postAuth("Ref12", "25", "10", "1850406725")
+    .then((result) => {
+      console.log("Success", result);
+    })
+    .catch((error) => console.error("Error detected:", error));
+      
+}
+async function lastTransaction() {
+    await payarc.payarcConnect
+    .login()
+    .catch((error) => console.error("Error detected:", error));
+
+    payarc.payarcConnect
+    .lastTransaction("1850406725")
+    .then((result) => {
+      console.log("Success", result);
+    })
+    .catch((error) => console.error("Error detected:", error));
+      
+}
+
+async function serverInfo() {
+    await payarc.payarcConnect
+    .login()
+    .catch((error) => console.error("Error detected:", error));
+
+    payarc.payarcConnect
+    .serverInfo()
+    .then((result) => {
+      console.log("Success", result);
+    })
+    .catch((error) => console.error("Error detected:", error));
+      
+}
+
+async function terminals() {
+    await payarc.payarcConnect
+    .login()
+    .catch((error) => console.error("Error detected:", error));
+
+    payarc.payarcConnect
+    .terminals()
+    .then((result) => {
+      console.log("Success", result);
+    })
+    .catch((error) => console.error("Error detected:", error));
+      
+}
+
+// sale()
+// pcVoid()  
+// refund()
+// blindCredit()
+// auth()
+// postAuth()
+// lastTransaction()
+// serverInfo()
+// terminals()
