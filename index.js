@@ -841,6 +841,7 @@ class Payarc {
         }
     }
 
+
     async pcSale(tenderType, ecrRefNum, amount, deviceSerialNo){
         const seed = { source: 'Payarc Connect Sale' }
         try {
@@ -863,12 +864,11 @@ class Payarc {
         }
     }
 
-    async pcVoid(ecrRefNum, payarcTransactionId, deviceSerialNo){
+    async pcVoid(payarcTransactionId, deviceSerialNo){
         const seed = { source: 'Payarc Connect Void' }
         try {
             const requestBody = {
                 TransType: "VOID",
-                ECRRefNum: ecrRefNum,
                 PayarcTransactionId: payarcTransactionId,
                 DeviceSerialNo: deviceSerialNo
             };
