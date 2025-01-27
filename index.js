@@ -17,6 +17,8 @@ class Payarc {
         this.baseURL = (apiVersion === '/v1/') ? `${this.baseURL}${apiVersion}` : `${this.baseURL}/v${apiVersion}/`
         this.bearerTokenAgent = bearerTokenAgent
 
+        this.payarcConnectBaseUrl = (baseUrl == 'prod') ? 'https://payarcconnectapi.curvpos.com' : 'https://payarcconnectapi.curvpos.dev'
+        this.payarcConnectAccessToken = ""
 
         // Initialize the charges object
         this.charges = {
@@ -68,6 +70,19 @@ class Payarc {
             list: this.listCases.bind(this),
             retrieve: this.getCase.bind(this),
             addDocument: this.addDocumentCase.bind(this)
+        }
+
+        this.payarcConnect = {
+            login: this.pcLogin.bind(this),
+            sale: this.pcSale.bind(this),
+            void: this.pcVoid.bind(this),
+            refund: this.pcRefund.bind(this),
+            blindCredit: this.pcBlindCredit.bind(this),
+            auth: this.pcAuth.bind(this),
+            postAuth: this.pcPostAuth.bind(this),
+            lastTransaction: this.pcLastTransaction.bind(this),
+            serverInfo: this.pcServerInfo.bind(this),
+            terminals: this.pcTerminals.bind(this),
         }
 
     }
@@ -799,7 +814,197 @@ class Payarc {
         }
     }
 
+    async pcLogin(){
+        const seed = { source: 'Payarc Connect Login' }
+        try{
+            const requestBody = {
+                SecretKey: this.bearerToken
+            };
+            const response = await axios.post(`${this.payarcConnectBaseUrl}/Login`, requestBody)
+            const accessToken = response.data?.BearerTokenInfo?.AccessToken
+        
+            if(accessToken){ 
+                this.payarcConnectAccessToken = accessToken
+            } else {
+                return this.payarcConnectError(seed, response.data)
+            }
 
+            return response.data
+        } catch (error) {
+            return this.manageError(seed, error.response || {});
+        }
+    }
+
+
+    async pcSale(tenderType, ecrRefNum, amount, deviceSerialNo){
+        const seed = { source: 'Payarc Connect Sale' }
+        try {
+            const requestBody = {
+                TenderType: tenderType,
+                TransType: "SALE",
+                ECRRefNum: ecrRefNum,
+                Amount: amount,
+                DeviceSerialNo: deviceSerialNo
+            };
+            const response = await axios.post(`${this.payarcConnectBaseUrl}/Transactions`, requestBody, {
+                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}` }
+            });
+            if(response.data?.ErrorCode != 0){
+                return this.payarcConnectError(seed, response.data)
+            }
+            return response.data
+        } catch (error) {
+            return this.manageError(seed, error.response || {});
+        }
+    }
+
+    async pcVoid(payarcTransactionId, deviceSerialNo){
+        const seed = { source: 'Payarc Connect Void' }
+        try {
+            const requestBody = {
+                TransType: "VOID",
+                PayarcTransactionId: payarcTransactionId,
+                DeviceSerialNo: deviceSerialNo
+            };
+            const response = await axios.post(`${this.payarcConnectBaseUrl}/Transactions`, requestBody, {
+                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}` }
+            });
+            if(response.data?.ErrorCode != 0){
+                return this.payarcConnectError(seed, response.data)
+            }
+            return response.data
+        } catch (error) {
+            return this.manageError(seed, error.response || {});
+        }
+    }
+
+    async pcRefund(amount, payarcTransactionId, deviceSerialNo){
+        const seed = { source: 'Payarc Connect Refund' }
+        try {
+            const requestBody = {
+                TransType: "REFUND",
+                Amount: amount,
+                PayarcTransactionId: payarcTransactionId,
+                DeviceSerialNo: deviceSerialNo
+            };
+            const response = await axios.post(`${this.payarcConnectBaseUrl}/Transactions`, requestBody, {
+                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}` }
+            });
+            if(response.data?.ErrorCode != 0){
+                return this.payarcConnectError(seed, response.data)
+            }
+            return response.data
+        } catch (error) {
+            return this.manageError(seed, error.response || {});
+        }
+    }
+
+    async pcBlindCredit(ecrRefNum, amount, token, expDate, deviceSerialNo){
+        const seed = { source: 'Payarc Connect Blind Credit' }
+        try {
+            const requestBody = {
+                TransType: "RETURN",
+                ECRRefNum: ecrRefNum,
+                Amount: amount,
+                Token: token,
+                ExpDate: expDate,
+                DeviceSerialNo: deviceSerialNo,
+            };
+            const response = await axios.post(`${this.payarcConnectBaseUrl}/Transactions`, requestBody, {
+                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}` }
+            });
+            if(response.data?.ErrorCode != 0){
+                return this.payarcConnectError(seed, response.data)
+            }
+            return response.data
+        } catch (error) {
+            return this.manageError(seed, error.response || {});
+        }
+    }
+
+    async pcAuth(ecrRefNum, amount, deviceSerialNo){
+        const seed = { source: 'Payarc Connect Auth' }
+        try {
+            const requestBody = {
+                TransType: "AUTH",
+                ECRRefNum: ecrRefNum,
+                Amount: amount,
+                DeviceSerialNo: deviceSerialNo,
+            };
+            const response = await axios.post(`${this.payarcConnectBaseUrl}/Transactions`, requestBody, {
+                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}` }
+            });
+            if(response.data?.ErrorCode != 0){
+                return this.payarcConnectError(seed, response.data)
+            }
+            return response.data
+        } catch (error) {
+            return this.manageError(seed, error.response || {});
+        }
+    }
+
+    async pcPostAuth(ecrRefNum, origRefNum, amount, deviceSerialNo){
+        const seed = { source: 'Payarc Connect Post Auth' }
+        try {
+            const requestBody = {
+                TransType: "POSTAUTH",
+                ECRRefNum: ecrRefNum,
+                OrigRefNum: origRefNum,
+                Amount: amount,
+                DeviceSerialNo: deviceSerialNo,
+            };
+            const response = await axios.post(`${this.payarcConnectBaseUrl}/Transactions`, requestBody, {
+                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}` }
+            });
+            if(response.data?.ErrorCode != 0){
+                return this.payarcConnectError(seed, response.data)
+            }
+            return response.data
+        } catch (error) {
+            return this.manageError(seed, error.response || {});
+        }
+    }
+
+    async pcLastTransaction(deviceSerialNo){
+        const seed = { source: 'Payarc Connect Last Transaction' }
+        try {
+            const response = await axios.get(`${this.payarcConnectBaseUrl}/LastTransaction`, {
+                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}`},
+                params: { DeviceSerialNo: deviceSerialNo }
+            });
+            if(response.data?.ErrorCode != 0){
+                return this.payarcConnectError(seed, response.data)
+            }
+            return response.data
+        } catch (error) {
+            return this.manageError(seed, error.response || {});
+        }
+    }
+
+    async pcServerInfo(){
+        const seed = { source: 'Payarc Connect Server Info' }
+        try {
+            const response = await axios.get(`${this.payarcConnectBaseUrl}/ServerInfo`);
+            return response.data
+        } catch (error) {
+            return this.manageError(seed, error.response || {});
+        }
+    }
+
+    async pcTerminals(){
+        const seed = { source: 'Payarc Connect Terminals' }
+        try {
+            const response = await axios.get(`${this.payarcConnectBaseUrl}/Terminals`, {
+                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}`}
+            });
+            if(response.data?.ErrorCode != 0){
+                return this.payarcConnectError(seed, response.data)
+            }
+            return response.data
+        } catch (error) {
+            return this.manageError(seed, error.response || {});
+        }
+    }
 
     addObjectId(object) {
         const handleObject = (obj) => {
@@ -904,5 +1109,14 @@ class Payarc {
         return seed
         throw new Error(seed)
     }
+
+    payarcConnectError(seed, data){
+        const error = {
+            statusText: data.ErrorMessage,
+            status: data.ErrorCode,
+        } 
+        return this.manageError(seed, error)
+    }
+
 }
 module.exports = Payarc;
