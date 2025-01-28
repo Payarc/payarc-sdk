@@ -1,8 +1,11 @@
 {
-  "name": "@payarc/payarc-sdk",
+  "name": "payarc-sdk",
   "version": "0.0.10",
   "description": "Financial API's SDK",
   "main": "index.js",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "test": "echo \"No test specified for now\" "
   },
