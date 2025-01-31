@@ -1,10 +1,12 @@
 require('dotenv').config()
 const Payarc = require("../index");
+
 const bearerToken = process.env.PAYARC_KEY;
 const baseUrl = process.env.PAYARC_ENV;
 const apiVersion = "/v1/";
 const version = "1.0";
 const bearerTokenAgent = null;
+
 const payarc = new Payarc(
   bearerToken,
   baseUrl,
@@ -121,7 +123,7 @@ async function terminals() {
     .catch((error) => console.error("Error:", error));
 }
 
-login()
+// login()
 // sale()
 // pcVoid()  
 // refund()
@@ -130,5 +132,5 @@ login()
 // postAuth()
 // lastTransaction()
 // serverInfo()
-// terminals()
+terminals()
 

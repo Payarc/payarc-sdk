@@ -17,7 +17,18 @@ class Payarc {
         this.baseURL = (apiVersion === '/v1/') ? `${this.baseURL}${apiVersion}` : `${this.baseURL}/v${apiVersion}/`
         this.bearerTokenAgent = bearerTokenAgent
 
-        this.payarcConnectBaseUrl = (baseUrl == 'prod') ? 'https://payarcconnectapi.curvpos.com' : 'https://payarcconnectapi.curvpos.dev'
+        switch (baseUrl) {
+            case 'prod':
+                this.payarcConnectBaseUrl = 'https://payarcconnectapi.curvpos.com';
+                break;
+            case 'sandbox':
+                this.payarcConnectBaseUrl = 'https://sandbox.payarcconnectapi.curvpos.dev';
+                break;
+            case 'test':
+                this.payarcConnectBaseUrl = 'http://testBaseUrl';
+                break;
+        }
+
         this.payarcConnectAccessToken = ""
 
         // Initialize the charges object
