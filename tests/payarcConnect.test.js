@@ -310,7 +310,7 @@ describe("Payarc Connect Test", () => {
     const seed = { source: "Payarc Connect Terminals" };
     const error = { status: networkErrorCode };
     const failedResponse = payarc.manageError(seed, error);
-    mock.onGet(`${baseUrl}/Terminals`).reply(networkErrorCode, failedResponse);
+    mock.onGet(`${baseUrl}/TerminalsS`).reply(networkErrorCode, failedResponse);
     const response = await payarc.payarcConnect.terminals();
     expect(response).toEqual(failedResponse);
   });
