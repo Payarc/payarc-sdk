@@ -300,7 +300,7 @@ describe("Payarc Connect Test", () => {
       ErrorCode: apiErrorCode,
       ErrorMessage: ''
     };
-    mock.onGet(`${baseUrl}/Terminalss`).reply(networkErrorCode, successResponse);
+    mock.onGet(`${baseUrl}/Terminals`).reply(networkErrorCode, successResponse);
     const response = await payarc.payarcConnect.terminals();
     expect(response).toEqual(successResponse);
   });
