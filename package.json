@@ -1,6 +1,6 @@
 {
   "name": "payarc-sdk",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Financial API's SDK",
   "main": "index.js",
   "publishConfig": {

@@ -16,7 +16,7 @@ The Payarc SDK allows developers to integrate Payarc's payment processing capabi
 You can install the Payarc SDK using npm (for Node.js projects).
 
 ```bash
-npm install @payarc/payarc-sdk
+npm install payarc-sdk
 ```
 
 
@@ -50,7 +50,7 @@ then you create instance of the SDK
  * @param {string} bearerTokenAgent - The bearer token for agent authentication. Only required if you need functionality around candidate merchant
  * 
  */
-const payarc = new (require('@payarc/payarc-sdk'))(
+const payarc = new (require('payarc-sdk'))(
     process.env.PAYARC_KEY,
     process.env.PAYARC_ENV,
     undefined,
