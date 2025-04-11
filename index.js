@@ -43,6 +43,7 @@ class Payarc {
             retrieve: this.retrieveCustomer.bind(this),
             list: this.listCustomer.bind(this),
             update: this.updateCustomer.bind(this),
+            delete: this.deleteCustomer.bind(this),
         }
         this.applications = {
             create: this.addLead.bind(this),
@@ -312,6 +313,20 @@ class Payarc {
             return this.addObjectId(response.data.data)
         } catch (error) {
             return this.manageError({ source: 'API update customer info' }, error.response || {});
+        }
+    }
+    async deleteCustomer(customer) {
+        customer = customer.object_id ? customer.object_id : customer
+        if (customer.startsWith('cus_')) {
+            customer = customer.slice(4)
+        }
+        try {
+            const response = await axios.delete(`${this.baseURL}customers/${customer}`, {
+                headers: { Authorization: `Bearer ${this.bearerToken}` }
+            });
+            return null
+        } catch (error) {
+            return this.manageError({ source: 'API delete customer info' }, error.response || {});
         }
     }
     async listCustomer(searchData = {}) {
@@ -1026,6 +1041,7 @@ class Payarc {
                 } else if (obj.object === 'customer') {
                     obj.object_id = `cus_${obj.customer_id}`
                     obj.update = this.updateCustomer.bind(this, obj)
+                    obj.delete = this.deleteCustomer.bind(this,obj)
                     obj.cards = {}
                     obj.cards.create = this.addCardToCustomer.bind(this, obj)
                     if (obj.bank_accounts === undefined) {

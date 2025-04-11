@@ -441,6 +441,29 @@ payarc.customers.retrieve('cus_AnonymizedCustomerID')
     .catch(error => console.error(error));
 ```
 
+### Example: Delete a Customer
+
+This example demonstrates how to delete an existing customer when only ID is known:
+
+```javascript
+payarc.customers.delete('cus_AnonymizedCustomerID'
+}).then((obj) => {
+    console.log("Customer deleted successfully:", obj);
+}).catch(error => console.error('Error detected:', error));
+```
+
+### Example: Delete an Already Found Customer
+
+This example shows how to update a customer object:
+
+```javascript
+payarc.customers.retrieve('cus_AnonymizedCustomerID')
+.then((customer) => {
+        customer.delete();
+})
+.catch(error => console.error(error));
+```
+
 ## Manage Disputes
 A dispute in the context of payment processing refers to a situation where a cardholder questions the validity of a transaction that appears on their statement. This can lead to a chargeback, where the transaction amount is reversed from the merchant's account and credited back to the cardholder. A cardholder sees a transaction on their account that they believe is incorrect or unauthorized. This could be due to various reasons such as fraudulent activity, billing errors, or dissatisfaction with a purchase. The cardholder contacts their issuing bank to dispute the transaction. They may provide details on why they believe the transaction is invalid. The issuing bank investigates the dispute. This may involve gathering information from the cardholder and reviewing the transaction details. The issuing bank communicates the dispute to the acquiring bank (the merchant's bank) through the card network (in your case Payarc). The merchant is then required to provide evidence to prove the validity of the transaction, such as receipts, shipping information, or communication with the customer. Based on the evidence provided by both the cardholder and the merchant, the issuing bank makes a decision. If the dispute is resolved in favor of the cardholder, a chargeback occurs, and the transaction amount is deducted from the merchant's account and credited to the cardholder. If resolved in favor of the merchant, the transaction stands.
 ### Inquiry Dispute 
