@@ -138,7 +138,7 @@ class Payarc {
                 }
                 chargeData.type = 'debit'
                 const resp = await axios.post(`${this.baseURL}achcharges`, chargeData, {
-                    headers: { Authorization: `Bearer ${this.bearerToken}` }
+                    headers: thisrequestHeaders(this.bearerToken)
                 });
                 return this.addObjectId(resp.data.data);
             } else if (/^\d/.test(chargeData.source || '')) {
@@ -155,7 +155,7 @@ class Payarc {
             }
             delete chargeData.source;
             const response = await axios.post(`${this.baseURL}charges`, chargeData, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` },
+                headers: this.requestHeaders(this.bearerToken),
                 maxRedirects: 0,
             });
             return this.addObjectId(response.data.data);
@@ -169,7 +169,7 @@ class Payarc {
             if (chargeId.startsWith('ch_')) {
                 chargeId = chargeId.slice(3);
                 const response = await axios.get(`${this.baseURL}charges/${chargeId}`, {
-                    headers: { Authorization: `Bearer ${this.bearerToken}` },
+                    headers: this.requestHeaders(this.bearerToken),
                     params: {
                         include: 'transaction_metadata,extra_metadata',
                     }
@@ -179,7 +179,7 @@ class Payarc {
             if (chargeId.startsWith('ach_')) {
                 chargeId = chargeId.slice(4);
                 const response = await axios.get(`${this.baseURL}achcharges/${chargeId}`, {
-                    headers: { Authorization: `Bearer ${this.bearerToken}` },
+                    headers: this.requestHeaders(this.bearerToken),
                     params: {
                         include: 'review',
                     }
@@ -204,7 +204,7 @@ class Payarc {
         const { limit = 25, page = 1, search = {} } = searchData;
         try {
             const response = await axios.get(`${this.baseURL}charges`, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` },
+                headers: this.requestHeaders(this.bearerToken),
                 params: {
                     limit,
                     page,
@@ -227,7 +227,7 @@ class Payarc {
     async createCustomer(customerData = {}) {
         try {
             const response = await axios.post(`${this.baseURL}customers`, customerData, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` }
+                headers: this.requestHeaders(this.bearerToken)
             });
             const customer = this.addObjectId(response.data.data);
             if (customerData.cards && customerData.cards.length > 0) {
@@ -254,7 +254,7 @@ class Payarc {
         }
         try {
             const response = await axios.get(`${this.baseURL}customers/${customerId}`, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` },
+                headers: this.requestHeaders(this.bearerToken),
                 params: {
                 }
             });
@@ -266,7 +266,7 @@ class Payarc {
     async genTokenForCard(tokenData = {}) {
         try {
             const response = await axios.post(`${this.baseURL}tokens`, tokenData, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` }
+                headers: this.requestHeaders(this.bearerToken)
             });
             return response.data.data
         } catch (error) {
@@ -294,7 +294,7 @@ class Payarc {
             }
             accData.customer_id = customerId
             const response = await axios.post(`${this.baseURL}bankaccounts`, accData, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` }
+                headers: this.requestHeaders(this.bearerToken)
             });
             return this.addObjectId(response.data.data)
         } catch (error) {
@@ -308,7 +308,7 @@ class Payarc {
         }
         try {
             const response = await axios.patch(`${this.baseURL}customers/${customer}`, custData, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` }
+                headers: this.requestHeaders(this.bearerToken)
             });
             return this.addObjectId(response.data.data)
         } catch (error) {
@@ -322,7 +322,7 @@ class Payarc {
         }
         try {
             const response = await axios.delete(`${this.baseURL}customers/${customer}`, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` }
+                headers: this.requestHeaders(this.bearerToken)
             });
             return null
         } catch (error) {
@@ -333,7 +333,7 @@ class Payarc {
         const { limit = 25, page = 1, constraint = {} } = searchData;
         try {
             const response = await axios.get(`${this.baseURL}customers`, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` },
+                headers: this.requestHeaders(this.bearerToken),
                 params: {
                     limit,
                     page,
@@ -364,7 +364,7 @@ class Payarc {
         }
         try {
             const response = await axios.post(`${this.baseURL}charges/${chargeId}/refunds`, params, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` }
+                headers: this.requestHeaders(this.bearerToken)
             });
             return this.addObjectId(response.data.data);
         } catch (error) {
@@ -387,7 +387,7 @@ class Payarc {
             params.bank_account_id = params.bank_account_id.slice(4);
         }
         const resp = await axios.post(`${this.baseURL}achcharges`, params, {
-            headers: { Authorization: `Bearer ${this.bearerToken}` }
+            headers: this.requestHeaders(this.bearerToken)
         });
         return this.addObjectId(resp.data.data);
     }
@@ -398,7 +398,7 @@ class Payarc {
                 applicant.agentId = applicant.agentId.slice(4)
             }
             const resp = await axios.post(`${this.baseURL}agent-hub/apply/add-lead`, applicant, {
-                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+                headers: this.requestHeaders(this.bearerTokenAgent)
             });
             return this.addObjectId(resp.data);
         } catch (error) {
@@ -409,7 +409,7 @@ class Payarc {
     async applyApps() {
         try {
             const response = await axios.get(`${this.baseURL}agent-hub/apply-apps`, {
-                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` },
+                headers: this.requestHeaders(this.bearerTokenAgent),
                 params: {
                     limit: 0,
                     is_archived: 0
@@ -428,12 +428,12 @@ class Payarc {
                 applicantId = applicantId.slice(5)
             }
             const response = await axios.get(`${this.baseURL}agent-hub/apply-apps/${applicantId}`, {
-                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` },
+                headers: this.requestHeaders(this.bearerTokenAgent),
                 params: {
                 }
             });
             const docs = await axios.get(`${this.baseURL}agent-hub/apply-documents/${applicantId}`, {
-                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` },
+                headers: this.requestHeaders(this.bearerTokenAgent),
                 params: {
                     limit: 0
                 }
@@ -459,7 +459,7 @@ class Payarc {
                 "skipGIACT": true}, 
                 newData) //Add required properties to update the bank
             const response = await axios.patch(`${this.baseURL}agent-hub/apply-apps/${dataId}`, newData, {
-                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+                headers: this.requestHeaders(this.bearerTokenAgent)
             });
             if(response.status === 200){
                 return this.retrieveApplicant(dataId)
@@ -476,7 +476,7 @@ class Payarc {
                 applicantId = applicantId.slice(5)
             }
             const resp = await axios.delete(`${this.baseURL}agent-hub/apply/delete-lead`, { 'MerchantCode': applicantId }, {
-                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+                headers: this.requestHeaders(this.bearerTokenAgent)
             });
             return this.addObjectId(resp.data.data);
         } catch (error) {
@@ -495,7 +495,7 @@ class Payarc {
                     'MerchantDocuments': [params]
                 },
                 {
-                    headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+                    headers: this.requestHeaders(this.bearerTokenAgent)
                 });
             return this.addObjectId(response.data)
         } catch (error) {
@@ -507,7 +507,7 @@ class Payarc {
         try {
             const response = await axios.get(`${this.baseURL}agent-hub/sub-agents`,
                 {
-                    headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+                    headers: this.requestHeaders(this.bearerTokenAgent)
                 });
             return this.addObjectId(response.data && response.data.data || [])
         } catch (error) {
@@ -522,10 +522,10 @@ class Payarc {
                 documentId = documentId.slice(4)
             }
             // const resp = await axios.delete(`${this.baseURL}agent-hub/apply/delete-documents`, { 'MerchantDocuments': [{ 'DocumentCode': documentId }] }, {
-            //     headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+            //     headers: this.requestHeaders(this.bearerTokenAgent)
             // });
             const resp = await axios.delete(`${this.baseURL}agent-hub/apply/delete-documents`, {
-                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` },
+                headers: this.requestHeaders(this.bearerTokenAgent),
                 data: { 'MerchantDocuments': [{ 'DocumentCode': documentId }] }
             });
             return this.addObjectId(resp.data);
@@ -544,7 +544,7 @@ class Payarc {
                     'MerchantCode': applicantId
                 },
                 {
-                    headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+                    headers: this.requestHeaders(this.bearerTokenAgent)
                 });
             return this.addObjectId(response.data)
         } catch (error) {
@@ -558,7 +558,7 @@ class Payarc {
             const response = await axios.post(`${this.baseURL}agent-hub/campaigns`,
                 data,
                 {
-                    headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+                    headers: this.requestHeaders(this.bearerTokenAgent)
                 });
             return this.addObjectId(response.data.data)
         } catch (error) {
@@ -569,7 +569,7 @@ class Payarc {
     async getAllCampaigns(){
         try {
             const response = await axios.get(`${this.baseURL}agent-hub/campaigns`, {
-                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` },
+                headers: this.requestHeaders(this.bearerTokenAgent),
                 params: {
                     limit: 0
                 }
@@ -587,7 +587,7 @@ class Payarc {
                 keyId = keyId.slice(4)
             }
             const response = await axios.get(`${this.baseURL}agent-hub/campaigns/${keyId}`, {
-                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` },
+                headers: this.requestHeaders(this.bearerTokenAgent),
                 params: {
                     limit: 0
                 }
@@ -605,7 +605,7 @@ class Payarc {
         }
         try {
             const response = await axios.patch(`${this.baseURL}agent-hub/campaigns/${dataId}`, newData, {
-                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+                headers: this.requestHeaders(this.bearerTokenAgent)
             });
             return this.addObjectId(response.data.data)
         } catch (error) {
@@ -615,7 +615,7 @@ class Payarc {
     async getAllAccounts(){
         try {
             const response = await axios.get(`${this.baseURL}account/my-accounts`, {
-                headers: { Authorization: `Bearer ${this.bearerTokenAgent}` }
+                headers: this.requestHeaders(this.bearerTokenAgent)
             });
             return this.addObjectId(response.data || {})
 
@@ -636,7 +636,7 @@ class Payarc {
             const response = await axios.post(`${this.baseURL}plans`,
                 data,
                 {
-                    headers: { Authorization: `Bearer ${this.bearerToken}` }
+                    headers: this.requestHeaders(this.bearerToken)
                 });
             return this.addObjectId(response.data.data)
         } catch (error) {
@@ -647,7 +647,7 @@ class Payarc {
         const data = params.object_id? params.object_id:params
         try {
             const response = await axios.get(`${this.baseURL}plans/${data}`, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` }
+                headers: this.requestHeaders(this.bearerToken)
             });
             return this.addObjectId(response.data.data || {})
 
@@ -664,7 +664,7 @@ class Payarc {
             if(!params.limit){
                 params.limit = "99999"}
             const response = await axios.get(`${this.baseURL}plans`, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` },
+                headers: this.requestHeaders(this.bearerToken),
                 params:{...params}
             });
             return this.addObjectId(response.data.data || {})
@@ -677,7 +677,7 @@ class Payarc {
         const dataId = params.object_id? params.object_id:params
         try {
             const response = await axios.patch(`${this.baseURL}plans/${dataId}`, newData, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` }
+                headers: this.requestHeaders(this.bearerToken)
             });
             return this.addObjectId(response.data.data)
         } catch (error) {
@@ -695,7 +695,7 @@ class Payarc {
             if(!params.limit){
                 params.limit = "99999"}
             const response = await axios.get(`${this.baseURL}subscriptions`, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` },
+                headers: this.requestHeaders(this.bearerToken),
                 params:{...params}
             });
             return this.addObjectId(response.data.data || {})
@@ -714,7 +714,7 @@ class Payarc {
             newData.plan_id = dataId
             newData.customer_id = newData.customer_id.startsWith('cus_') ? newData.customer_id.slice(4) : newData.customer_id
              const response = await axios.post(`${this.baseURL}subscriptions`, newData, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` }
+                headers: this.requestHeaders(this.bearerToken)
             });
             return this.addObjectId(response.data.data)
         } catch (error) {
@@ -726,7 +726,7 @@ class Payarc {
             let dataId = params.object_id? params.object_id:params
             dataId = dataId.startsWith('sub_') ? dataId.slice(4) : dataId
             const response = await axios.patch(`${this.baseURL}subscriptions/${dataId}/cancel`, {}, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` }
+                headers: this.requestHeaders(this.bearerToken)
             });
             return this.addObjectId(response.data.data)
         } catch (error) {
@@ -739,7 +739,7 @@ class Payarc {
             let dataId = params.object_id? params.object_id:params
             dataId = dataId.startsWith('sub_') ? dataId.slice(4) : dataId
             const response = await axios.patch(`${this.baseURL}subscriptions/${dataId}`, newData, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` }
+                headers: this.requestHeaders(this.bearerToken)
             });
             return this.addObjectId(response.data.data)
         } catch (error) {
@@ -762,7 +762,7 @@ class Payarc {
             }
 
             const response = await axios.get(`${this.baseURL}cases`, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` },
+                headers: this.requestHeaders(this.bearerToken),
                 params: { ...params }
             });
             return this.addObjectId(response.data.data || {})
@@ -776,7 +776,7 @@ class Payarc {
         data = data.startsWith('dis_') ? data.slice(4) : data
         try {
             const response = await axios.get(`${this.baseURL}cases/${data}`, {
-                headers: { Authorization: `Bearer ${this.bearerToken}` }
+                headers: this.requestHeaders(this.bearerToken)
             });
             return this.addObjectId(response.data.primary_case.data || {})
 
@@ -818,11 +818,14 @@ class Payarc {
 
             }
 
+            const requestHeaders = this.requestHeaders(this.bearerToken);
+            const baseHeaders = { ...requestHeaders, ...headers };
+
             const response = await axios.post(`${this.baseURL}cases/${disputeId}/evidence`,
                 formDataBuffer
                 ,
                 {
-                    headers: { Authorization: `Bearer ${this.bearerToken}`, ...headers }
+                    headers: baseHeaders
                 });
 
             const subResponse = await axios.post(`${this.baseURL}cases/${disputeId}/submit`,
@@ -832,7 +835,7 @@ class Payarc {
                 }
                 ,
                 {
-                    headers: { Authorization: `Bearer ${this.bearerToken}`, }
+                    headers: this.requestHeaders(this.bearerToken)
                 });
             return this.addObjectId(response.data)
         } catch (error) {
@@ -873,7 +876,7 @@ class Payarc {
                 DeviceSerialNo: deviceSerialNo
             };
             const response = await axios.post(`${this.payarcConnectBaseUrl}/Transactions`, requestBody, {
-                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}` }
+                headers: this.requestHeaders(this.payarcConnectAccessToken)
             });
             if(response.data?.ErrorCode != 0){
                 return this.payarcConnectError(seed, response.data)
@@ -893,7 +896,7 @@ class Payarc {
                 DeviceSerialNo: deviceSerialNo
             };
             const response = await axios.post(`${this.payarcConnectBaseUrl}/Transactions`, requestBody, {
-                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}` }
+                headers: this.requestHeaders(this.payarcConnectAccessToken)
             });
             if(response.data?.ErrorCode != 0){
                 return this.payarcConnectError(seed, response.data)
@@ -914,7 +917,7 @@ class Payarc {
                 DeviceSerialNo: deviceSerialNo
             };
             const response = await axios.post(`${this.payarcConnectBaseUrl}/Transactions`, requestBody, {
-                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}` }
+                headers: this.requestHeaders(this.payarcConnectAccessToken)
             });
             if(response.data?.ErrorCode != 0){
                 return this.payarcConnectError(seed, response.data)
@@ -937,7 +940,7 @@ class Payarc {
                 DeviceSerialNo: deviceSerialNo,
             };
             const response = await axios.post(`${this.payarcConnectBaseUrl}/Transactions`, requestBody, {
-                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}` }
+                headers: this.requestHeaders(this.payarcConnectAccessToken)
             });
             if(response.data?.ErrorCode != 0){
                 return this.payarcConnectError(seed, response.data)
@@ -958,7 +961,7 @@ class Payarc {
                 DeviceSerialNo: deviceSerialNo,
             };
             const response = await axios.post(`${this.payarcConnectBaseUrl}/Transactions`, requestBody, {
-                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}` }
+                headers: this.requestHeaders(this.payarcConnectAccessToken)
             });
             if(response.data?.ErrorCode != 0){
                 return this.payarcConnectError(seed, response.data)
@@ -980,7 +983,7 @@ class Payarc {
                 DeviceSerialNo: deviceSerialNo,
             };
             const response = await axios.post(`${this.payarcConnectBaseUrl}/Transactions`, requestBody, {
-                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}` }
+                headers: this.requestHeaders(this.payarcConnectAccessToken)
             });
             if(response.data?.ErrorCode != 0){
                 return this.payarcConnectError(seed, response.data)
@@ -995,7 +998,7 @@ class Payarc {
         const seed = { source: 'Payarc Connect Last Transaction' }
         try {
             const response = await axios.get(`${this.payarcConnectBaseUrl}/LastTransaction`, {
-                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}`},
+                headers: this.requestHeaders(this.payarcConnectAccessToken),
                 params: { DeviceSerialNo: deviceSerialNo }
             });
             if(response.data?.ErrorCode != 0){
@@ -1021,7 +1024,7 @@ class Payarc {
         const seed = { source: 'Payarc Connect Terminals' }
         try {
             const response = await axios.get(`${this.payarcConnectBaseUrl}/Terminals`, {
-                headers: { Authorization: `Bearer ${this.payarcConnectAccessToken}`}
+                headers: this.requestHeaders(this.payarcConnectAccessToken)
             });
             if(response.data?.ErrorCode != 0){
                 return this.payarcConnectError(seed, response.data)
@@ -1135,6 +1138,13 @@ class Payarc {
         seed.errorDataMessage = (error.data && error.data.message) || 'unKnown'
         return seed
         throw new Error(seed)
+    }
+
+    requestHeaders(token) {
+        return {
+            Authorization: `Bearer ${token}`,
+            'user-agent': `sdk-nodejs/${this.version}`
+        }
     }
 
     payarcConnectError(seed, data){
