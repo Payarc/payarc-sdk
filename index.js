@@ -36,7 +36,9 @@ class Payarc {
             create: this.createCharge.bind(this),
             retrieve: this.getCharge.bind(this),
             list: this.listCharge.bind(this),
-            createRefund: this.refundCharge.bind(this)
+            createRefund: this.refundCharge.bind(this),
+            listByAgentPayfac: this.listChargesByAgentPayfac.bind(this),
+            listByAgentTraditional: this.listChargesByAgentTraditional.bind(this)
         }
         this.customers = {
             create: this.createCustomer.bind(this),
@@ -371,6 +373,46 @@ class Payarc {
             return this.manageError({ source: 'API Refund a charge' }, error.response || {});
         }
     }
+    async listChargesByAgentPayfac(){
+        try {
+            const response = await axios.get(`${this.baseURL}agent-hub/merchant-bridge/charges`, {
+                headers: this.requestHeaders(this.bearerTokenAgent),
+                params: {
+                }
+            });
+            // Apply the object_id transformation to each charge
+            const charges = response.data.data.map(charge => {
+                this.addObjectId(charge);
+                return charge;
+            });
+            const pagination = response.data.meta.pagination || {}
+            delete pagination['links']
+            return { charges, pagination };
+        } catch (error) {
+            return this.manageError({ source: 'API List charges by agent Payfac' }, error.response || {});
+        }
+    }
+    async listChargesByAgentTraditional(params = {}){
+        try {
+            const response = await axios.get(`${this.baseURL}agent/charges`, {
+                headers: this.requestHeaders(this.bearerTokenAgent),
+                params: {
+                    from_date: params.from_date || '',
+                    to_date: params.to_date || ''
+                }
+            });
+            // Apply the object_id transformation to each charge
+            const charges = response.data.data.map(charge => {
+                this.addObjectId(charge);
+                return charge;
+            });
+            const pagination = response.data.meta.pagination || {}
+            delete pagination['links']
+            return { charges, pagination };
+        } catch (error) {
+            return this.manageError({ source: 'API List charges by agent Traditional' }, error.response || {});
+        }
+    }
     async refundACHCharge(charge, params = {}) {
         if (typeof charge === 'object' && charge !== null && !Array.isArray(charge)) {
             //charge is already sn object
@@ -564,7 +606,6 @@ class Payarc {
         } catch (error) {
             return this.manageError({ source: 'API Create campaign ...' }, error.response || {});
         }
-
     }
     async getAllCampaigns(){
         try {
