@@ -882,6 +882,21 @@ payarc.billing.plan.subscription.update('sub_R0lVAjR0VPAjgPrx',{description:'Mon
     .then((subs) => { console.log("Updated subscription:", subs) })
     .catch((erro) => { console.log('We have a problem ', erro) })
 ```
+
+## Listing Batches
+
+### Example: List Batches with Constraints by Agent
+
+This example demonstrates how to list all batches by agent with date constraints:
+
+```javascript
+payarc.batches.listByAgent({
+    from_date: '2025-07-19',
+    to_date: '2025-07-22'
+  })
+    .then(batches => console.log(batches))
+    .catch(error => console.error(error));
+```
  
 # Payarc Connect
 The following functionality will pertain only to user who are utilizing the Payarc Connect integration:

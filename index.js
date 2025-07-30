@@ -85,7 +85,9 @@ class Payarc {
             retrieve: this.getCase.bind(this),
             addDocument: this.addDocumentCase.bind(this)
         }
-
+        this.batches = {
+            listByAgent: this.listBatcheReportsByAgent.bind(this),
+        }
         this.payarcConnect = {
             login: this.pcLogin.bind(this),
             sale: this.pcSale.bind(this),
@@ -883,7 +885,25 @@ class Payarc {
             return this.manageError({ source: 'API Dispute documents add' }, error.response || {});
         }
     }
-
+    async listBatcheReportsByAgent(params = {}){
+        try {
+            const response = await axios.get(`${this.baseURL}agent/batch/reports`, {
+                headers: this.requestHeaders(this.bearerTokenAgent),
+                params: {
+                    from_date: params.from_date || '',
+                    to_date: params.to_date || ''
+                }
+            });
+            // Apply the object_id transformation to each charge
+            const batches = response.data.data.map(batche => {
+                this.addObjectId(batche);
+                return batche;
+            });
+            return { batches };
+        } catch (error) {
+            return this.manageError({ source: 'API List batches by agent' }, error.response || {});
+        }
+    }
     async pcLogin(){
         const seed = { source: 'Payarc Connect Login' }
         try{
@@ -1149,6 +1169,10 @@ class Payarc {
                 obj.update = this.updatePlan.bind(this, obj)
                 obj.delete = this.deletePlan.bind(this, obj)
                 obj.createSubscription = this.createSubscription.bind(this, obj)
+            } else if (obj.Batch_Reference_Number) { //This is batch object
+                obj.object_id = `brn_${obj.Batch_Reference_Number}`
+                obj.object = 'Batch'
+                delete obj.Batch_Reference_Number
             }
 
             for (const key in obj) {

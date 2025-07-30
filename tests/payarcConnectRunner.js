@@ -29,13 +29,13 @@ const payarcListExisting = new Payarc(
 );
 
 async function test() {
-  payarc.charges.listByAgentTraditional({
-    from_date: '2025-07-23',
-    to_date: '2025-07-23'
+  payarc.batches.listByAgent({
+    from_date: '2024-09-01',
+    to_date: '2024-09-05'
   })
 .then((response) => {
-    const { charges = [] } = response;
-    console.log(charges);
+    const { charges = {} } = response;
+    console.log(response);
 })
 .catch(error => console.error(error));
   //JSON.stringify(result, null, '\t')
