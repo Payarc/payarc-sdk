@@ -29,15 +29,28 @@ const payarcListExisting = new Payarc(
 );
 
 async function test() {
-  payarc.customers.list({
-    limit: 3
-})
+  payarc.charges.listByAgentTraditional({
+    from_date: '2025-07-23',
+    to_date: '2025-07-23'
+  })
 .then((response) => {
-    const { customers = [] } = response;
-    console.log(customers[0].card.data);
+    const { charges = [] } = response;
+    console.log(charges);
 })
 .catch(error => console.error(error));
   //JSON.stringify(result, null, '\t')
 }
+
+// async function test() {
+//   payarc.customers.list({
+//     limit: 3
+// })
+// .then((response) => {
+//     const { customers = [] } = response;
+//     console.log(customers);
+// })
+// .catch(error => console.error(error));
+//   //JSON.stringify(result, null, '\t')
+// }
 
 test();
