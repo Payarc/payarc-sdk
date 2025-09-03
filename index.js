@@ -86,7 +86,8 @@ class Payarc {
             addDocument: this.addDocumentCase.bind(this)
         }
         this.batches = {
-            listByAgent: this.listBatcheReportsByAgent.bind(this),
+            listReportsByAgent: this.listBatchReportsByAgent.bind(this),
+            listReportDetailsByAgent: this.listBatchReportDetailsByAgent.bind(this)
         }
         this.payarcConnect = {
             login: this.pcLogin.bind(this),
@@ -885,7 +886,7 @@ class Payarc {
             return this.manageError({ source: 'API Dispute documents add' }, error.response || {});
         }
     }
-    async listBatcheReportsByAgent(params = {}){
+    async listBatchReportsByAgent(params = {}){
         try {
             const response = await axios.get(`${this.baseURL}agent/batch/reports`, {
                 headers: this.requestHeaders(this.bearerTokenAgent),
@@ -895,11 +896,40 @@ class Payarc {
                 }
             });
             // Apply the object_id transformation to each charge
-            const batches = response.data.data.map(batche => {
-                this.addObjectId(batche);
-                return batche;
+            const batches = response.data.data.map(batch => {
+                this.addObjectId(batch);
+                return batch;
             });
             return { batches };
+        } catch (error) {
+            return this.manageError({ source: 'API List batches by agent' }, error.response || {});
+        }
+    }
+    async listBatchReportDetailsByAgent(params = {}){
+        try {
+            const { merchant_account_number, reference_number, date } = params;
+            if (!reference_number) {
+                console.error("Reference number is not defined.");
+                return [];
+            }
+            const response = await axios.get(`${this.baseURL}agent/batch/reports/details/${merchant_account_number}`, {
+                headers: this.requestHeaders(this.bearerTokenAgent),
+                params: {
+                    reference_number: reference_number,
+                    date: date
+                }
+            });
+            const apiResponseData = response.data.data;
+            const batchDetails = apiResponseData[reference_number];
+            let batchData = [];
+            if (batchDetails && batchDetails.batch_data) {
+                batchData = batchDetails.batch_data;
+            }
+            const batchDetailWithId = this.addObjectId(batchData);
+            if (apiResponseData && apiResponseData[reference_number]) {
+                apiResponseData[reference_number].batch_data = batchDetailWithId;
+            }
+            return response.data;
         } catch (error) {
             return this.manageError({ source: 'API List batches by agent' }, error.response || {});
         }
@@ -1169,10 +1199,11 @@ class Payarc {
                 obj.update = this.updatePlan.bind(this, obj)
                 obj.delete = this.deletePlan.bind(this, obj)
                 obj.createSubscription = this.createSubscription.bind(this, obj)
-            } else if (obj.Batch_Reference_Number) { //This is batch object
-                obj.object_id = `brn_${obj.Batch_Reference_Number}`
+            } else if (obj.Batch_Reference_Number || obj.batch_ref_num) { //This is batch object
+                obj.object_id = `brn_${obj.Batch_Reference_Number || obj.batch_ref_num}`
                 obj.object = 'Batch'
                 delete obj.Batch_Reference_Number
+                delete obj.batch_ref_num
             }
 
             for (const key in obj) {
