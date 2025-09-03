@@ -25,4 +25,4 @@ storage/framework/laravel-excel
 storage/*.ppk
 storage/*.pem
 cspell.json
-/tests
+/tests/*
