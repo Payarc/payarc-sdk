@@ -25,5 +25,4 @@ storage/framework/laravel-excel
 storage/*.ppk
 storage/*.pem
 cspell.json
-payarcConnect.test.js
-payarcConnectRunner.js
+/tests
