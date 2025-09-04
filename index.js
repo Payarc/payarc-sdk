@@ -58,7 +58,7 @@ class Payarc {
             deleteDocument: this.deleteApplicantDocument.bind(this),
             listSubAgents: this.SubAgents.bind(this)
         }
-        this.deposit = {
+        this.deposits = {
             list: this.agentDepositSummary.bind(this),
         }
         this.splitCampaigns = {
