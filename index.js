@@ -89,8 +89,8 @@ class Payarc {
             addDocument: this.addDocumentCase.bind(this)
         }
         this.batches = {
-            listReportsByAgent: this.listBatchReportsByAgent.bind(this),
-            listReportDetailsByAgent: this.listBatchReportDetailsByAgent.bind(this)
+            list: this.listBatchReportsByAgent.bind(this),
+            retrieve: this.listBatchReportDetailsByAgent.bind(this)
         }
         this.payarcConnect = {
             login: this.pcLogin.bind(this),
