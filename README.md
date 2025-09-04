@@ -885,16 +885,55 @@ payarc.billing.plan.subscription.update('sub_R0lVAjR0VPAjgPrx',{description:'Mon
 
 ## Listing Batches
 
-### Example: List Batches with Constraints by Agent
+### Example: List Batch Reports by Agent with Constraints
 
-This example demonstrates how to list all batches by agent with date constraints:
+This example demonstrates how to 
+retrieve batch settlement reports for merchants based on a specified date range. The 
+response contains detailed transaction and settlement information for each merchant
+account within the given date range.
 
 ```javascript
-payarc.batches.listByAgent({
+payarc.batches.list({
     from_date: '2025-07-19',
     to_date: '2025-07-22'
   })
     .then(batches => console.log(batches))
+    .catch(error => console.error(error));
+```
+
+### Example: List Batch Report Details by Agent
+
+This example demonstrates how to retrieve
+detailed transaction information for a specific merchant’s batch report based on the
+Merchant_Account_Number, Batch_Reference_Number, and the specified date. 
+It provides a list of individual transactions for that batch, along with batch totals.
+[Get parameters for desired batch report here](#example-list-batch-reports-by-agent-with-constraints)
+
+```javascript
+payarc.batches.retrieve({
+    merchant_account_number: '000000000000000',
+    reference_number: '000000000000',
+    date: 'YYYY-MM-DD'
+  })
+    .then(batch => console.log(batch))
+    .catch(error => console.error(error));
+```
+
+## Listing Deposits
+
+### Example: List Deposits by Agent with Constraints
+
+This example demonstrates how to 
+retrieve deposit settlement reports for merchants based on a specified date range. The 
+response contains detailed deposit and settlement information for each merchant
+account within the given date range.
+
+```javascript
+payarc.deposits.list({
+    from_date: '2025-07-19',
+    to_date: '2025-07-22'
+  })
+    .then(deposits => console.log(deposits))
     .catch(error => console.error(error));
 ```
  

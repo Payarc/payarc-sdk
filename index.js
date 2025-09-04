@@ -58,6 +58,9 @@ class Payarc {
             deleteDocument: this.deleteApplicantDocument.bind(this),
             listSubAgents: this.SubAgents.bind(this)
         }
+        this.deposits = {
+            list: this.agentDepositSummary.bind(this),
+        }
         this.splitCampaigns = {
             create: this.createCampaign.bind(this),
             list: this.getAllCampaigns.bind(this),
@@ -86,7 +89,8 @@ class Payarc {
             addDocument: this.addDocumentCase.bind(this)
         }
         this.batches = {
-            listByAgent: this.listBatcheReportsByAgent.bind(this),
+            list: this.listBatchReportsByAgent.bind(this),
+            retrieve: this.listBatchReportDetailsByAgent.bind(this)
         }
         this.payarcConnect = {
             login: this.pcLogin.bind(this),
@@ -885,7 +889,7 @@ class Payarc {
             return this.manageError({ source: 'API Dispute documents add' }, error.response || {});
         }
     }
-    async listBatcheReportsByAgent(params = {}){
+    async listBatchReportsByAgent(params = {}){
         try {
             const response = await axios.get(`${this.baseURL}agent/batch/reports`, {
                 headers: this.requestHeaders(this.bearerTokenAgent),
@@ -895,13 +899,61 @@ class Payarc {
                 }
             });
             // Apply the object_id transformation to each charge
-            const batches = response.data.data.map(batche => {
-                this.addObjectId(batche);
-                return batche;
+            const batches = response.data.data.map(batch => {
+                this.addObjectId(batch);
+                return batch;
             });
             return { batches };
         } catch (error) {
             return this.manageError({ source: 'API List batches by agent' }, error.response || {});
+        }
+    }
+    async listBatchReportDetailsByAgent(params = {}){
+        try {
+            const { merchant_account_number, reference_number, date } = params;
+            if (!reference_number) {
+                console.error("Reference number is not defined.");
+                return [];
+            }
+            const response = await axios.get(`${this.baseURL}agent/batch/reports/details/${merchant_account_number}`, {
+                headers: this.requestHeaders(this.bearerTokenAgent),
+                params: {
+                    reference_number: reference_number,
+                    date: date
+                }
+            });
+            const apiResponseData = response.data.data;
+            const batchDetails = apiResponseData[reference_number];
+            let batchData = [];
+            if (batchDetails && batchDetails.batch_data) {
+                batchData = batchDetails.batch_data;
+            }
+            const batchDetailWithId = this.addObjectId(batchData);
+            if (apiResponseData && apiResponseData[reference_number]) {
+                apiResponseData[reference_number].batch_data = batchDetailWithId;
+            }
+            return response.data;
+        } catch (error) {
+            return this.manageError({ source: 'API List batches by agent' }, error.response || {});
+        }
+    }
+    async agentDepositSummary(params = {}){
+        try {
+            const response = await axios.get(`${this.baseURL}agent/deposit/summary`, {
+                headers: this.requestHeaders(this.bearerTokenAgent),
+                params: {
+                    from_date: params.from_date || '',
+                    to_date: params.to_date || ''
+                }
+            });
+            // Apply the object_id transformation to each charge
+            const deposits = response.data.data.map(account => {
+                this.addObjectId(account);
+                return account;
+            });
+            return { deposits };
+        } catch (error) {
+            return this.manageError({ source: 'API List deposit reports by agent' }, error.response || {});
         }
     }
     async pcLogin(){
@@ -1149,6 +1201,9 @@ class Payarc {
                 } else if (obj.object === "Cases") {
                     obj.object = "Dispute"
                     obj.object_id = `dis_${obj.id}`
+                } else if (obj.object === 'Account') {
+                    obj.object = "Merchant"
+                    obj.object_id = `acc_${obj.id}`
                 }
             } else if (obj.MerchantCode) {
                 obj.object_id = `appl_${obj.MerchantCode}`
@@ -1169,10 +1224,11 @@ class Payarc {
                 obj.update = this.updatePlan.bind(this, obj)
                 obj.delete = this.deletePlan.bind(this, obj)
                 obj.createSubscription = this.createSubscription.bind(this, obj)
-            } else if (obj.Batch_Reference_Number) { //This is batch object
-                obj.object_id = `brn_${obj.Batch_Reference_Number}`
+            } else if (obj.Batch_Reference_Number || obj.batch_ref_num) { //This is batch object
+                obj.object_id = `brn_${obj.Batch_Reference_Number || obj.batch_ref_num}`
                 obj.object = 'Batch'
                 delete obj.Batch_Reference_Number
+                delete obj.batch_ref_num
             }
 
             for (const key in obj) {
