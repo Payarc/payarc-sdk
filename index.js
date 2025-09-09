@@ -912,11 +912,11 @@ class Payarc {
     async listBatchReportDetailsByAgent(params = {}){
         try {
             const { merchant_account_number, reference_number, date } = params;
-            var refNum = reference_number.startsWith('brn_') ? reference_number.slice(4) : reference_number
             if (!reference_number) {
                 console.error("Reference number is not defined.");
                 return [];
             }
+            var refNum = reference_number.startsWith('brn_') ? reference_number.slice(4) : reference_number;
             const response = await axios.get(`${this.baseURL}agent/batch/reports/details/${merchant_account_number}`, {
                 headers: this.requestHeaders(this.bearerTokenAgent),
                 params: {
