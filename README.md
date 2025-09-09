@@ -918,6 +918,24 @@ payarc.batches.retrieve({
     .then(batch => console.log(batch))
     .catch(error => console.error(error));
 ```
+
+## Listing Deposits
+
+### Example: List Deposits by Agent with Constraints
+
+This example demonstrates how to 
+retrieve deposit settlement reports for merchants based on a specified date range. The 
+response contains detailed deposit and settlement information for each merchant
+account within the given date range.
+
+```javascript
+payarc.deposits.list({
+    from_date: '2025-07-19',
+    to_date: '2025-07-22'
+  })
+    .then(deposits => console.log(deposits))
+    .catch(error => console.error(error));
+```
  
 # Payarc Connect
 The following functionality will pertain only to user who are utilizing the Payarc Connect integration:
