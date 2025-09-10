@@ -908,6 +908,7 @@ class Payarc {
             return this.manageError({ source: 'API List batches by agent' }, error.response || {});
         }
     }
+    
     async listBatchReportDetailsByAgent(params = {}){
         try {
             const { merchant_account_number, reference_number, date } = params;
@@ -915,26 +916,27 @@ class Payarc {
                 console.error("Reference number is not defined.");
                 return [];
             }
+            let refNum = reference_number.startsWith('brn_') ? reference_number.slice(4) : reference_number;
             const response = await axios.get(`${this.baseURL}agent/batch/reports/details/${merchant_account_number}`, {
                 headers: this.requestHeaders(this.bearerTokenAgent),
                 params: {
-                    reference_number: reference_number,
+                    reference_number: refNum,
                     date: date
                 }
             });
             const apiResponseData = response.data.data;
-            const batchDetails = apiResponseData[reference_number];
+            const batchDetails = apiResponseData[refNum];
             let batchData = [];
             if (batchDetails && batchDetails.batch_data) {
                 batchData = batchDetails.batch_data;
             }
             const batchDetailWithId = this.addObjectId(batchData);
-            if (apiResponseData && apiResponseData[reference_number]) {
-                apiResponseData[reference_number].batch_data = batchDetailWithId;
+            if (apiResponseData && apiResponseData[refNum]) {
+                apiResponseData[refNum].batch_data = batchDetailWithId;
             }
             return response.data;
         } catch (error) {
-            return this.manageError({ source: 'API List batches by agent' }, error.response || {});
+            return this.manageError({ source: 'API Batch Detail by agent' }, error.response || {});
         }
     }
     async agentDepositSummary(params = {}){
