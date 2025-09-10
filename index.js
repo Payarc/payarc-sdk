@@ -919,15 +919,16 @@ class Payarc {
                 console.error("Reference number is not defined.");
                 return [];
             }
+            let refNum = reference_number.startsWith('brn_') ? reference_number.slice(4) : reference_number;
             const response = await axios.get(`${this.baseURL}agent/batch/reports/details/${merchant_account_number}`, {
                 headers: this.requestHeaders(this.bearerTokenAgent),
                 params: {
-                    reference_number: reference_number,
+                    reference_number: refNum,
                     date: date
                 }
             });
             const apiResponseData = response.data.data;
-            const batchDetails = apiResponseData[reference_number];
+            const batchDetails = apiResponseData[refNum];
             let batchData = [];
             if (batchDetails && batchDetails.batch_data) {
                 batchData = batchDetails.batch_data;
