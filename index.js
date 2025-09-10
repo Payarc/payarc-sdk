@@ -916,7 +916,7 @@ class Payarc {
                 console.error("Reference number is not defined.");
                 return [];
             }
-            var refNum = reference_number.startsWith('brn_') ? reference_number.slice(4) : reference_number;
+            const refNum = reference_number.startsWith('brn_') ? reference_number.slice(4) : reference_number;
             const response = await axios.get(`${this.baseURL}agent/batch/reports/details/${merchant_account_number}`, {
                 headers: this.requestHeaders(this.bearerTokenAgent),
                 params: {
@@ -936,7 +936,7 @@ class Payarc {
             }
             return response.data;
         } catch (error) {
-            return this.manageError({ source: 'API Batche Detail by agent' }, error.response || {});
+            return this.manageError({ source: 'API Batch Detail by agent' }, error.response || {});
         }
     }
     async agentDepositSummary(params = {}){
