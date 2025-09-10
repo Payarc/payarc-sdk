@@ -916,7 +916,7 @@ class Payarc {
                 console.error("Reference number is not defined.");
                 return [];
             }
-            const refNum = reference_number.startsWith('brn_') ? reference_number.slice(4) : reference_number;
+            let refNum = reference_number.startsWith('brn_') ? reference_number.slice(4) : reference_number;
             const response = await axios.get(`${this.baseURL}agent/batch/reports/details/${merchant_account_number}`, {
                 headers: this.requestHeaders(this.bearerTokenAgent),
                 params: {
