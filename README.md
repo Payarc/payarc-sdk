@@ -617,6 +617,16 @@ payarc.applications.listSubAgents()
     .catch((error) => { console.log('We encountered an issue ', error); })
 ```
 
+### Check the Status of an Application
+
+This example demonstrates how to retrieve the status of an application.
+
+```javascript
+payarc.applications.status('appl_vajm67vv9m7bxrlk')
+.then((res)=>{console.log('Application status', res)})
+.catch((error)=>{console.log('An error occurred', error)})
+```
+
 ### Retrieve Information for Candidate Merchant
 To continue with onboarding process you might need to provide additional information or to inquiry existing leads. In SDK existis following functions `list` and `retrieve`. 
 
