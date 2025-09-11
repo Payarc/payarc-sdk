@@ -92,6 +92,10 @@ class Payarc {
             list: this.listBatchReportsByAgent.bind(this),
             retrieve: this.listBatchReportDetailsByAgent.bind(this)
         }
+        this.instructionalFunding = {
+            create: this.createInstructionalFunding.bind(this),
+            list: this.listInstructionalFunding.bind(this),
+        }
         this.payarcConnect = {
             login: this.pcLogin.bind(this),
             sale: this.pcSale.bind(this),
@@ -172,7 +176,6 @@ class Payarc {
         }
     }
     async getCharge(chargeId) {
-
         try {
             if (chargeId.startsWith('ch_')) {
                 chargeId = chargeId.slice(3);
@@ -907,10 +910,9 @@ class Payarc {
         } catch (error) {
             return this.manageError({ source: 'API List batches by agent' }, error.response || {});
         }
-    }
-    
+    }    
     async listBatchReportDetailsByAgent(params = {}){
-        try {
+        try {            
             const { merchant_account_number, reference_number, date } = params;
             if (!reference_number) {
                 console.error("Reference number is not defined.");
@@ -956,6 +958,34 @@ class Payarc {
             return { deposits };
         } catch (error) {
             return this.manageError({ source: 'API List deposit reports by agent' }, error.response || {});
+        }
+    }
+    async listInstructionalFunding(searchData = {}){
+        try {
+        const { limit = 25, page = 1, include = 'charge' } = searchData;
+            const response = await axios.get(`${this.baseURL}instructional_funding`, {
+                headers: this.requestHeaders(this.bearerToken),
+                params: { limit, page, include }
+            });
+            const chargeSplits = response.data.data.map(chargeSplit => {
+                this.addObjectId(chargeSplit);
+                return chargeSplit;
+            });
+            return { chargeSplits };
+        } catch (error) {
+            return this.manageError({ source: 'API List instructional funding by agent' }, error.response || {});
+        }
+    }
+    async createInstructionalFunding(data){
+        try {
+            const response = await axios.post(`${this.baseURL}instructional_funding`,
+                data,
+                {
+                    headers: this.requestHeaders(this.bearerToken)
+                });
+            return this.addObjectId(response.data.data)
+        } catch (error) {
+            return this.manageError({ source: 'API Create instructional funding ...' }, error.response || {});
         }
     }
     async pcLogin(){
@@ -1206,6 +1236,8 @@ class Payarc {
                 } else if (obj.object === 'Account') {
                     obj.object = "Merchant"
                     obj.object_id = `acc_${obj.id}`
+                } else if (obj.object === 'ChargeSplit') {
+                    obj.object_id = `cspl_${obj.id}`
                 }
             } else if (obj.MerchantCode) {
                 obj.object_id = `appl_${obj.MerchantCode}`
