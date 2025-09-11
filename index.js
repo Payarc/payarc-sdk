@@ -911,30 +911,42 @@ class Payarc {
     
     async listBatchReportDetailsByAgent(params = {}){
         try {
+            if (params.reference_number && params.reference_number.startsWith('brn_')) {
+                params.reference_number = params.reference_number.slice(4);
+            }
             const { merchant_account_number, reference_number, date } = params;
             if (!reference_number) {
                 console.error("Reference number is not defined.");
                 return [];
             }
-            let refNum = reference_number.startsWith('brn_') ? reference_number.slice(4) : reference_number;
             const response = await axios.get(`${this.baseURL}agent/batch/reports/details/${merchant_account_number}`, {
                 headers: this.requestHeaders(this.bearerTokenAgent),
                 params: {
-                    reference_number: refNum,
+                    reference_number: reference_number,
                     date: date
                 }
             });
             const apiResponseData = response.data.data;
-            const batchDetails = apiResponseData[refNum];
+            const batchDetails = apiResponseData[reference_number];
             let batchData = [];
             if (batchDetails && batchDetails.batch_data) {
                 batchData = batchDetails.batch_data;
             }
             const batchDetailWithId = this.addObjectId(batchData);
-            if (apiResponseData && apiResponseData[refNum]) {
-                apiResponseData[refNum].batch_data = batchDetailWithId;
-            }
-            return response.data;
+            if (apiResponseData && apiResponseData[reference_number]) {
+                apiResponseData[reference_number].batch_data = batchDetailWithId;
+            } 
+            const updatedBatchDetail = {
+                ...response.data,
+                data: {
+                    ...apiResponseData,
+                    [reference_number]: {
+                        ...batchDetails,
+                        batch_data: batchDetailWithId,
+                    },
+                },
+            };
+            return updatedBatchDetail;
         } catch (error) {
             return this.manageError({ source: 'API Batch Detail by agent' }, error.response || {});
         }

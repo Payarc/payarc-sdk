@@ -29,15 +29,15 @@ const payarcListExisting = new Payarc(
 );
 
 async function test() {
-  payarc.batches.listByAgent({
-    from_date: '2024-09-01',
-    to_date: '2024-09-05'
+  payarc.batches.retrieve({
+    merchant_account_number: '700100000084879',
+    reference_number: 'brn_633103040001',
+    date: '2024-09-04'
   })
-.then((response) => {
-    const { charges = {} } = response;
-    console.log(response);
-})
-.catch(error => console.error(error));
+    .then((response) => {
+      console.log(JSON.stringify(response, null, '\t'));
+    })
+    .catch(error => console.error(error));
   //JSON.stringify(result, null, '\t')
 }
 
