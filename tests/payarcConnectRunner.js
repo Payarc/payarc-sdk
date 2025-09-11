@@ -29,15 +29,63 @@ const payarcListExisting = new Payarc(
 );
 
 async function test() {
-  payarc.batches.retrieve({
-    merchant_account_number: '700100000084879',
-    reference_number: 'brn_633103040001',
-    date: '2024-09-04'
-  })
+
+
+  // payarc.charges.list()
+  //   .then((response) => {
+  //     const { charges = {} } = response;
+  //     console.log(JSON.stringify(charges, null, '\t'));
+  //   })
+  //   .catch(error => console.error(error));
+
+// payarc.charges.retrieve('6dl8k07950g9ymxw')
+//   .then(charge => console.log('Success the charge is ', JSON.stringify(charge, null, '\t')))
+//   .catch(error => console.error('Error detected:', error));
+
+
+  // payarc.charges.create({
+  //   amount: 10, // Amount in cents
+  //   currency: 'usd', // Currency code (e.g., 'usd')
+  //   source: {
+  //     card_number: '4085404032505228', // Payment source (e.g., credit card number)
+  //     exp_month: '02',  //Credit card attributes 
+  //     exp_year: '2027', //Credit card attributes 
+  //   },
+  //   splits: [
+  //     {
+  //       mid: "0709900000098856",
+  //       percent: 30,
+  //     },
+  //     {
+  //       mid: "0709900000098856",
+  //       amount: 15,
+  //     }
+  //   ]
+  // })
+  //   .then(charge => console.log('Success the charge is ', JSON.stringify(charge, null, '\t')))
+  //   .catch(error => console.error('Error detected:', error));
+
+
+
+    // payarc.instructionalFunding.list()
+    // .then((response) => {
+    //   console.log(JSON.stringify(response, null, '\t'));
+    // })
+    // .catch(error => console.error(error));
+
+
+    payarc.instructionalFunding.create(
+      {
+        mid: "0709900000098856",
+        amount: 500,
+      }
+    )
     .then((response) => {
       console.log(JSON.stringify(response, null, '\t'));
     })
     .catch(error => console.error(error));
+
+
   //JSON.stringify(result, null, '\t')
 }
 
