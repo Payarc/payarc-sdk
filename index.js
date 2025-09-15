@@ -37,6 +37,7 @@ class Payarc {
             retrieve: this.getCharge.bind(this),
             list: this.listCharge.bind(this),
             createRefund: this.refundCharge.bind(this),
+            tipAdjust: this.tipAdjustCharge.bind(this),
             listByAgentPayfac: this.listChargesByAgentPayfac.bind(this),
             listByAgentTraditional: this.listChargesByAgentTraditional.bind(this)
         }
@@ -361,6 +362,25 @@ class Payarc {
 
         } catch (error) {
             return this.manageError({ source: 'API List customers' }, error.response || {});
+        }
+    }
+    async tipAdjustCharge(id, params) {
+        let chargeId = id.object_id ? id.object_id : id
+        if (chargeId.startsWith('ch_')) {
+            chargeId = chargeId.slice(3);
+        }
+        if (chargeId.startsWith('ach_')) {// the case of ACH charge
+            chargeId = chargeId.slice(4);
+        }
+        console.log("Adjusting tip for charge ID:", chargeId, "with params:", params);
+        try {
+            const response = await axios.post(`${this.baseURL}charges/${chargeId}/tip_adjustment`, params, {
+                headers: this.requestHeaders(this.bearerToken)
+            });
+            console.log(response.data)
+            return this.addObjectId(response.data.data);
+        } catch (error) {
+            return this.manageError({ source: 'API Tip Adjust a charge' }, error.response || {});
         }
     }
     async refundCharge(charge, params) {
