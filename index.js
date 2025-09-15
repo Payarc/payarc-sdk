@@ -911,6 +911,9 @@ class Payarc {
     
     async listBatchReportDetailsByAgent(params = {}){
         try {
+            if (params.reference_number && params.reference_number.startsWith('brn_')) {
+                params.reference_number = params.reference_number.slice(4);
+            }
             const { merchant_account_number, reference_number, date } = params;
             if (!reference_number) {
                 console.error("Reference number is not defined.");
@@ -931,10 +934,20 @@ class Payarc {
                 batchData = batchDetails.batch_data;
             }
             const batchDetailWithId = this.addObjectId(batchData);
-            if (apiResponseData && apiResponseData[refNum]) {
-                apiResponseData[refNum].batch_data = batchDetailWithId;
-            }
-            return response.data;
+            if (apiResponseData && apiResponseData[reference_number]) {
+                apiResponseData[reference_number].batch_data = batchDetailWithId;
+            } 
+            const updatedBatchDetail = {
+                ...response.data,
+                data: {
+                    ...apiResponseData,
+                    [reference_number]: {
+                        ...batchDetails,
+                        batch_data: batchDetailWithId,
+                    },
+                },
+            };
+            return updatedBatchDetail;
         } catch (error) {
             return this.manageError({ source: 'API Batch Detail by agent' }, error.response || {});
         }
