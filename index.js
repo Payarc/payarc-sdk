@@ -364,20 +364,18 @@ class Payarc {
             return this.manageError({ source: 'API List customers' }, error.response || {});
         }
     }
-    async tipAdjustCharge(id, params) {
-        let chargeId = id.object_id ? id.object_id : id
+    async tipAdjustCharge(charge, params) {
+        let chargeId = charge.object_id ? charge.object_id : charge
         if (chargeId.startsWith('ch_')) {
             chargeId = chargeId.slice(3);
         }
         if (chargeId.startsWith('ach_')) {// the case of ACH charge
-            chargeId = chargeId.slice(4);
+            return this.manageError({ source: 'API Tip Adjust a charge' }, 'Tip adjustment is not applicable for ACH charges');
         }
-        console.log("Adjusting tip for charge ID:", chargeId, "with params:", params);
         try {
             const response = await axios.post(`${this.baseURL}charges/${chargeId}/tip_adjustment`, params, {
                 headers: this.requestHeaders(this.bearerToken)
             });
-            console.log(response.data)
             return this.addObjectId(response.data.data);
         } catch (error) {
             return this.manageError({ source: 'API Tip Adjust a charge' }, error.response || {});
@@ -938,8 +936,7 @@ class Payarc {
             }
             const { merchant_account_number, reference_number, date } = params;
             if (!reference_number) {
-                console.error("Reference number is not defined.");
-                return [];
+                return this.manageError({ source: 'API Batch Report Details by Agent' }, 'Reference number is required.');
             }
             const response = await axios.get(`${this.baseURL}agent/batch/reports/details/${merchant_account_number}`, {
                 headers: this.requestHeaders(this.bearerTokenAgent),
@@ -1218,6 +1215,7 @@ class Payarc {
                 if (obj.object === 'Charge') {
                     obj.object_id = `ch_${obj.id}`
                     obj.createRefund = this.refundCharge.bind(this, obj)
+                    obj.tipAdjust = this.tipAdjustCharge.bind(this, obj)
                 } else if (obj.object === 'customer') {
                     obj.object_id = `cus_${obj.customer_id}`
                     obj.update = this.updateCustomer.bind(this, obj)
