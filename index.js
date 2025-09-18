@@ -1027,10 +1027,12 @@ class Payarc {
     }
     async createInstructionalFunding(data){
         try {
+        const { mid = 25, amount = 1, include = 'charge' } = data;
             const response = await axios.post(`${this.baseURL}instructional_funding`,
-                data,
+                { mid, amount },
                 {
-                    headers: this.requestHeaders(this.bearerToken)
+                    headers: this.requestHeaders(this.bearerToken),
+                    params: { include }
                 });
             return this.addObjectId(response.data.data)
         } catch (error) {
