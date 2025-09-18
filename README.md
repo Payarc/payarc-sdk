@@ -142,6 +142,43 @@ payarc.charges.create({
         .catch(error => console.error('Error detected:',error));
 ```
 
+## Creating Split Funding
+
+### Example: Create a Split Funding on Charge
+
+When processing a charge with split funding, you need to include additional attributes in the request payload:
+
+splits → an array of split objects. 
+    Each split must include the MID number of the payee. 
+    Each split must define either:
+        percent → the percentage of the total amount, or
+        amount → a fixed amount value
+        ⚠️ You cannot use both percent and amount in the same split
+
+```javascript
+payarc.charges.create({
+        amount: 3288, // Amount in cents
+        currency: 'usd', // Currency code (e.g., 'usd')
+    source:{
+            card_number: '4012000098765439', // Payment source (e.g., credit card number)
+            exp_month: '03',  //Credit card attributes 
+            exp_year: '2025', //Credit card attributes 
+        }
+    splits:[
+        {
+            mid: '',
+            percent: 30
+        },
+        {
+            mid: '',
+            amount: 50
+        }
+    ]
+    })
+        .then(charge => console.log('Success the charge is ',charge))
+        .catch(error => console.error('Error detected:',error));
+```
+
 ### Example: Create a Charge by Token
 To create a payment(charge) from a customer, minimum information required is:
 amount converted in cents,
@@ -335,6 +372,34 @@ payarc.charges.retrieve('ach_D9ehhhhhh08aA')
 payarc.charges.createRefund('ach_D9ehhhhhh08aA',{})
     .then(ch=>console.log('Refunded with',ch))
     .catch(error => console.error('Error detected:',error))
+```
+
+## Adding Tip Adjustment
+
+### Example: Add a Tip to a Charge
+
+This example demonstrates how to add a tip to an existing charge:
+
+```javascript
+payarc.charges.retrieve('ch_AnonymizedChargeID')
+.then((charge) => {
+    charge.tipAdjust({
+        tip: 50
+    }).then((obj) => {
+        console.log("Tip adjusted successful:", obj);
+    }).catch(error => console.error('Error detected:', error));
+})
+.catch(error => console.error('Error detected:', error));
+```
+
+Alternatively, you can add a tip to the charge directly using the `tipAdjust` method on the Payarc instance:
+
+```javascript
+payarc.charges.tipAdjust('ch_AnonymizedChargeID', { 
+    tip: 50 
+    })
+.then(charge => console.log('Success! The tip charge is:', charge))
+.catch(error => console.error('Error detected:', error));
 ```
 
 ## Managing Customers
