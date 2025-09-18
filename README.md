@@ -962,6 +962,35 @@ payarc.deposits.list({
     .then(deposits => console.log(deposits))
     .catch(error => console.error(error));
 ```
+
+## Instructional Funding
+
+## Listing Instructional Fundings
+
+### Example: List Instruction Fundings
+
+This example demonstrates how to list all instructional fundings:
+
+```javascript
+payarc.instructionalFunding.list()
+    .then(instructionalFundings => console.log(instructionalFundings))
+    .catch(error => console.error(error));
+```
+
+## Create Instructional Funding
+
+### Example: Create Instructional Funding
+
+This example demonstrates how to transfer money to my payees via instructional funding:
+
+```javascript
+payarc.instructionalFunding.create({
+        mid: "000000000000000",
+        amount: 500
+    })
+    .then(instructionalFundings => console.log(instructionalFundings))
+    .catch(error => console.error(error));
+```
  
 # Payarc Connect
 The following functionality will pertain only to user who are utilizing the Payarc Connect integration:
