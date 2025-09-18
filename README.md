@@ -471,10 +471,11 @@ payarc.customers.retrieve('cus_AnonymizedCustomerID')
 This example demonstrates how to delete an existing customer when only ID is known:
 
 ```javascript
-payarc.customers.delete('cus_AnonymizedCustomerID'
-}).then((obj) => {
+payarc.customers.delete('cus_AnonymizedCustomerID')
+.then((obj) => {
     console.log("Customer deleted successfully:", obj);
-}).catch(error => console.error('Error detected:', error));
+})
+.catch(error => console.error('Error detected:', error));
 ```
 
 ### Example: Delete an Already Found Customer
@@ -527,11 +528,6 @@ payarc.disputes.addDocument('dis_MVB1AVdssRM1wAW0',{'DocumentDataBase64':Documen
     .catch((erro) => { console.log('We have a problem ', erro) })
 
 ```
-
-
-
-
-
 
 
 ## Manage Candidate Merchants
@@ -722,6 +718,76 @@ As agent or ISV the process is completed once the contract between Payarc and yo
 payarc.applications.submit('appl_vajm67vv9m7bxrlk')
 .then((res)=>{console.log('Submitted with ', res)})
 .catch((erro)=>{console.log('We have a problem ', erro);})
+```
+
+## Manage Payee
+
+### Create new Payee
+
+In the process of connecting your payee with Payarc a selection is made based on Payarc's criteria. Process begins with filling information for the payee and creating an entry in the database. Here is an example how this process could start
+```javascript
+
+payarc.payee.create(
+    {
+      type: "sole_prop", //Allowed: `sole_prop` or `business`
+        personal_info: {
+          first_name: "PayeeName",
+          last_name: "PayeeLast",
+          ssn: "#########",
+          dob: "YYYY-MM-DD"
+      },
+      business_info: {
+        legal_name: "Payee Business Name",
+        ein: "##-#######",
+        irs_filing_type: "\"A\"" 
+                // "A" - Foreign Entity Verification Pending
+                // "B" - "Foreign Entity Identified before 1/1/11"
+                // "C" - "Non Profit Verified"
+                // "D" - "Non Profit Verification Pending"
+                // "F" - "Foreign Entity Verified"
+                // "G" - "Government Entity"
+                // "J" - "Financial Institution"
+                // "N" - "Not Excluded"
+      },
+      contact_info: {
+        email: "payee@example.com",
+        phone_number: "1234567890"
+      },
+      address_info: {
+        street: "123 Test St",
+        city: "Test City",
+        zip_code: "12345",
+        county_code: "NY"
+      },
+      banking_info: {
+        dda: "123456789",
+        routing: "987654321"
+      },
+      foundation_date: "YYYY-MM-DD",
+      date_incorporated: "YYYY-MM-DD"
+    }
+).then((result)=>{console.log('Submitted Payee:', result)})
+.catch((exep)=>{console.log('We encountered an issue ',exep);})
+```
+
+### Retrieve Information for Payees
+
+List all payee for current agent
+```javascript
+payarc.payee.list()
+.then((res)=>{console.log('List of payee', res);})
+.catch((error)=>{console.log('There is a problem somewhere ', error);})
+```
+
+### Example: Delete a Payee
+
+This example demonstrates how to delete an existing payee when only ID is known:
+
+```javascript
+payarc.payee.delete('appy_AnonymizedPayeeID')
+.then((obj) => {
+    console.log("Payee deleted successfully:", obj);
+}).catch(error => console.error('Error detected:', error));
 ```
 
 ## Split Payment

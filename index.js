@@ -59,6 +59,11 @@ class Payarc {
             deleteDocument: this.deleteApplicantDocument.bind(this),
             listSubAgents: this.SubAgents.bind(this)
         }
+        this.payee = {
+            create: this.addPayee.bind(this),
+            list: this.listPayee.bind(this),
+            delete: this.deletePayee.bind(this)
+        }
         this.deposits = {
             list: this.agentDepositSummary.bind(this),
         }
@@ -620,6 +625,48 @@ class Payarc {
             return this.addObjectId(response.data)
         } catch (error) {
             return this.manageError({ source: 'API Submit for signature' }, error.response || {});
+        }
+    }
+
+    // Payees
+    async addPayee(payeeData) {
+        try {
+            const resp = await axios.post(`${this.baseURL}agent-hub/apply/payees`, payeeData, {
+                headers: this.requestHeaders(this.bearerTokenAgent)
+            });
+            return this.addObjectId(resp.data);
+        } catch (error) {
+            return this.manageError({ source: 'API add payee' }, error.response || {});
+        }
+    }
+    async listPayee(searchData = {}){
+        try {
+        const { include = 'appData' } = searchData;
+            const response = await axios.get(`${this.baseURL}agent-hub/apply/payees`, {
+                headers: this.requestHeaders(this.bearerTokenAgent),
+                params: { include }
+            });
+            const payees = response.data.map(payee => {
+                this.addObjectId(payee);
+                return payee;
+            });
+            return { payees };
+        } catch (error) {
+            return this.manageError({ source: 'API List payees by agent' }, error.response || {});
+        }
+    }
+    async deletePayee(payee) {
+        try {
+            let payeeId = payee.object_id ? payee.object_id : payee
+            if (payeeId.startsWith('appy_')) {
+                payeeId = payeeId.slice(5)
+            }
+            const resp = await axios.delete(`${this.baseURL}agent-hub/apply/payees/${payeeId}`, {
+                headers: this.requestHeaders(this.bearerTokenAgent)
+            });
+            return this.addObjectId(resp.data.data);
+        } catch (error) {
+            return this.manageError({ source: 'API Payee delete' }, error.response || {});
         }
     }
 
@@ -1241,6 +1288,9 @@ class Payarc {
                 } else if (obj.object === 'ACHCharge') {
                     obj.object_id = `ach_${obj.id}`
                     obj.createRefund = this.refundCharge.bind(this, obj)
+                } else if (obj.object === 'ApplyApp' && (obj.isv_merchant_type && obj.isv_merchant_type.toLowerCase() === 'payee')) {
+                    obj.object = 'Payee'
+                    obj.object_id = `appy_${obj.id}`
                 } else if (obj.object === 'ApplyApp') {
                     obj.object_id = `appl_${obj.id}`
                     obj.retrieve = this.retrieveApplicant.bind(this, obj)
@@ -1272,15 +1322,21 @@ class Payarc {
                     obj.object_id = `cspl_${obj.id}`
                 }
             } else if (obj.MerchantCode) {
-                obj.object_id = `appl_${obj.MerchantCode}`
-                obj.object = 'ApplyApp'
-                delete obj.MerchantCode
-                obj.retrieve = this.retrieveApplicant.bind(this, obj)
-                obj.delete = this.deleteApplicant.bind(this, obj)
-                obj.addDocument = this.addApplicantDocument.bind(this, obj)
-                obj.submit = this.submitApplicantForSignature.bind(this, obj)
-                obj.update = this.updateApplicant.bind(this, obj)
-                obj.listSubAgents = this.SubAgents.bind(this, obj)
+                if (obj.AppData) {
+                    obj.object_id = `appy_${obj.MerchantCode}`
+                    obj.object = 'Payee'
+                    delete obj.MerchantCode
+                } else {
+                    obj.object_id = `appl_${obj.MerchantCode}`
+                    obj.object = 'ApplyApp'
+                    delete obj.MerchantCode
+                    obj.retrieve = this.retrieveApplicant.bind(this, obj)
+                    obj.delete = this.deleteApplicant.bind(this, obj)
+                    obj.addDocument = this.addApplicantDocument.bind(this, obj)
+                    obj.submit = this.submitApplicantForSignature.bind(this, obj)
+                    obj.update = this.updateApplicant.bind(this, obj)
+                    obj.listSubAgents = this.SubAgents.bind(this, obj)
+                }
             } else if (obj.plan_id) { //This is plan object
                 obj.object_id = obj.plan_id
                 obj.object = 'Plan'
