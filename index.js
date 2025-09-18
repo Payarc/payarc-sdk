@@ -1027,7 +1027,7 @@ class Payarc {
     }
     async createInstructionalFunding(data){
         try {
-        const { mid = 25, amount = 1, include = 'charge' } = data;
+        const { mid, amount, include = 'charge' } = data;
             const response = await axios.post(`${this.baseURL}instructional_funding`,
                 { mid, amount },
                 {
