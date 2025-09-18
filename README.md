@@ -682,6 +682,32 @@ payarc.applications.listSubAgents()
     .catch((error) => { console.log('We encountered an issue ', error); })
 ```
 
+### Check the Status of an Application
+
+This example demonstrates how to retrieve the status of an application.
+
+```javascript
+payarc.applications.status('appl_vajm67vv9m7bxrlk')
+.then((res)=>{console.log('Application status', res)})
+.catch((error)=>{console.log('An error occurred', error)})
+```
+
+<details>
+<summary>Application Status Details</summary>
+
+| Name | Description | Data Type | Possible Values |
+| ---- | ----------- | --------- | --------------- |
+| MerchantCode | id of the merchant. | String ||
+| Status | Application status | Int | 0 = STATUS_DRAFT<br>1 = STATUS_SENT_TO_MERCHANT<br>2 = STATUS_WAITING_SIGNATURE<br>4 = STATUS_SIGNED<br>8 = STATUS_LEADED<br>16 = STATUS_SENT_TO_MERCHANT_FOR_AGREEMENT<br>32 = STATUS_SUBMITTED<br>64 = STATUS_SUBMITTED_LEADED |
+| LeadCode | Once the Application is signed it will turn into Lead object with this ID. | String ||
+| LeadStatus | The status at each LeadModule level. E.g.: if Lead goes from "application" to "boarding" module this status may be reset back to "new". | String | approved<br>in_progress<br>submitted_to_underwriting<br>declined<br>Dead<br>application_submitted<br>pending_docs<br>buried<br>boarded<br>qa_complete<br>submitted_to_qa<br>active<br>submitted_to_postboarding<br>on_hold |
+| LeadModule | The module/stage in which the applications currently is. | String | application<br>boarding<br>deployment<br>fiserv_underwriting<br>PostBoarding<br>qa<br>RiskReview<br>underwriting |
+| AccountCode | Once the Lead is boarded it will turn into Account object (final stage) with this ID. | String ||
+| AccountMID | The MID of the Account. | String ||
+| AccountStatus || String | open<br>inactive<br>closed |
+| AchStatus | ACH boarding status, if the application is applied for it. Completed means the application is ready to start making ACH payments. | String | new<br>in_progress<br>completed |
+</details>
+
 ### Retrieve Information for Candidate Merchant
 To continue with onboarding process you might need to provide additional information or to inquiry existing leads. In SDK existis following functions `list` and `retrieve`. 
 
@@ -999,6 +1025,35 @@ payarc.deposits.list({
     to_date: '2025-07-22'
   })
     .then(deposits => console.log(deposits))
+    .catch(error => console.error(error));
+```
+
+## Instructional Funding
+
+## Listing Instructional Fundings
+
+### Example: List Instruction Fundings
+
+This example demonstrates how to list all instructional fundings:
+
+```javascript
+payarc.instructionalFunding.list()
+    .then(instructionalFundings => console.log(instructionalFundings))
+    .catch(error => console.error(error));
+```
+
+## Create Instructional Funding
+
+### Example: Create Instructional Funding
+
+This example demonstrates how to transfer money to my payees via instructional funding:
+
+```javascript
+payarc.instructionalFunding.create({
+        mid: "000000000000000",
+        amount: 500
+    })
+    .then(instructionalFundings => console.log(instructionalFundings))
     .catch(error => console.error(error));
 ```
  

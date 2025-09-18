@@ -52,6 +52,7 @@ class Payarc {
             create: this.addLead.bind(this),
             list: this.applyApps.bind(this),
             retrieve: this.retrieveApplicant.bind(this),
+            status: this.applicationStatus.bind(this),
             update: this.updateApplicant.bind(this),
             delete: this.deleteApplicant.bind(this),
             addDocument: this.addApplicantDocument.bind(this),
@@ -512,6 +513,25 @@ class Payarc {
             response.data.Documents = docs.data
             return this.addObjectId(response.data)
 
+        } catch (error) {
+            return this.manageError({ source: 'API Apply apps status' }, error.response || {});
+        }
+    }
+    async applicationStatus(applicant) {
+        try {
+            let applicantId = applicant.object_id ? applicant.object_id : applicant;
+            if (applicantId.startsWith('appl_')) {
+                applicantId = applicantId.slice(5);
+            }
+            const response = await axios.post(`${this.baseURL}agent-hub/apply/lead-status`,
+                {
+                    'MerchantCode': applicantId
+                },
+                {
+                    headers: this.requestHeaders(this.bearerTokenAgent)
+                }
+            );
+            return this.addObjectId(response.data);
         } catch (error) {
             return this.manageError({ source: 'API Apply apps status' }, error.response || {});
         }
