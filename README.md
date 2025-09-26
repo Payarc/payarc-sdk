@@ -166,11 +166,11 @@ payarc.charges.create({
         }
     splits:[
         {
-            mid: '',
+            mid: '000000000000000',
             percent: 30
         },
         {
-            mid: '',
+            mid: '000000000000000',
             amount: 50
         }
     ]
