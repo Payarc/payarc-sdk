@@ -116,6 +116,12 @@ class Payarc {
             terminals: this.pcTerminals.bind(this),
         }
 
+        this.userSettings = {
+            createOrUpdate: this.createOrUpdateUserSetting.bind(this),
+            list: this.listUserSettings.bind(this),
+            delete: this.deleteUserSetting.bind(this)
+        }
+
     }
     /**
      * Creates a charge.
@@ -1278,6 +1284,54 @@ class Payarc {
         }
     }
 
+    // USER SETTINGS WEBHOOKS <
+    async createOrUpdateUserSetting(settingData) {
+        try {
+            const response = await axios.post(`${this.baseURL}my-user-settings`, settingData, {
+                headers: this.requestHeaders(this.bearerToken)
+            });
+            return this.addObjectId(response.data.data);
+        } catch (error) {
+            return this.manageError({ source: 'API Create/Update User Setting' }, error.response || {});
+        }
+    }
+
+    async listUserSettings(searchData = {}) {
+        const { limit = 99999, page = 1, constraint = {} } = searchData;
+        try {
+            const response = await axios.get(`${this.baseURL}my-user-settings`, {
+                headers: this.requestHeaders(this.bearerToken),
+                params: {
+                    limit,
+                    page,
+                    ...constraint
+                }
+            });
+            const userSettings = response.data.data.map(setting => {
+                return this.addObjectId(setting);
+            });
+            const pagination = response.data.meta.pagination || {};
+            delete pagination['links'];
+            return { userSettings, pagination };
+        } catch (error) {
+            return this.manageError({ source: 'API List User Settings' }, error.response || {});
+        }
+    }
+
+    async deleteUserSetting(settingKey) {
+        try {
+            await axios.delete(`${this.baseURL}my-user-settings`, {
+                headers: this.requestHeaders(this.bearerToken),
+                data: { key: settingKey }
+            });
+            return true;
+        } catch (error) {
+            this.manageError({ source: 'API Delete User Setting' }, error.response || {});
+            return false;
+        }
+    }
+    // END WEBHOOKS METHODS
+
     addObjectId(object) {
         const handleObject = (obj) => {
             if (obj.id || obj.customer_id) {
@@ -1340,6 +1394,8 @@ class Payarc {
                     obj.object_id = `acc_${obj.id}`
                 } else if (obj.object === 'ChargeSplit') {
                     obj.object_id = `cspl_${obj.id}`
+                } else if (obj.object === 'UserSetting') {
+                    obj.object_id = `ust_${obj.id}`
                 }
             } else if (obj.MerchantCode) {
                 if (obj.AppData) {
